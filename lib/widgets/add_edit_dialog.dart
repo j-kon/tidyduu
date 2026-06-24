@@ -19,12 +19,16 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  late TodoPriority _selectedPriority;
+  DateTime? _selectedDueDate;
 
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.todo?.title ?? '');
     _descriptionController = TextEditingController(text: widget.todo?.description ?? '');
+    _selectedPriority = widget.todo?.priority ?? TodoPriority.medium;
+    _selectedDueDate = widget.todo?.dueDate;
   }
 
   @override
@@ -41,12 +45,16 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
         notifier.addTodo(
           _titleController.text,
           description: _descriptionController.text,
+          priority: _selectedPriority,
+          dueDate: _selectedDueDate,
         );
       } else {
         notifier.editTodo(
           widget.todo!.id,
           _titleController.text,
           newDescription: _descriptionController.text,
+          newPriority: _selectedPriority,
+          newDueDate: () => _selectedDueDate,
         );
       }
       Navigator.of(context).pop();
@@ -137,6 +145,93 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                   prefixIcon: const Icon(Icons.notes_rounded),
                   alignLabelWithHint: true,
                 ),
+              ),
+              const SizedBox(height: 20.0),
+              // Priority Selection
+              Text(
+                'Priority',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              SegmentedButton<TodoPriority>(
+                segments: const [
+                  ButtonSegment<TodoPriority>(
+                    value: TodoPriority.low,
+                    label: Text('Low'),
+                  ),
+                  ButtonSegment<TodoPriority>(
+                    value: TodoPriority.medium,
+                    label: Text('Medium'),
+                  ),
+                  ButtonSegment<TodoPriority>(
+                    value: TodoPriority.high,
+                    label: Text('High'),
+                  ),
+                ],
+                selected: {_selectedPriority},
+                onSelectionChanged: (newSelection) {
+                  setState(() {
+                    _selectedPriority = newSelection.first;
+                  });
+                },
+              ),
+              const SizedBox(height: 20.0),
+              // Due Date Selection
+              Text(
+                'Due Date',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      icon: const Icon(Icons.calendar_month_rounded),
+                      label: Text(
+                        _selectedDueDate == null
+                            ? 'No due date set'
+                            : 'Due: ${_selectedDueDate!.day}/${_selectedDueDate!.month}/${_selectedDueDate!.year}',
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                      ),
+                      onPressed: () async {
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate: _selectedDueDate ?? DateTime.now(),
+                          firstDate: DateTime.now().subtract(const Duration(days: 365)),
+                          lastDate: DateTime.now().add(const Duration(days: 365 * 5)),
+                        );
+                        if (date != null) {
+                          setState(() {
+                            _selectedDueDate = date;
+                          });
+                        }
+                      },
+                    ),
+                  ),
+                  if (_selectedDueDate != null) ...[
+                    const SizedBox(width: 8.0),
+                    IconButton(
+                      icon: const Icon(Icons.clear_rounded),
+                      tooltip: 'Clear due date',
+                      onPressed: () {
+                        setState(() {
+                          _selectedDueDate = null;
+                        });
+                      },
+                    ),
+                  ],
+                ],
               ),
               const SizedBox(height: 24.0),
               // Action Buttons

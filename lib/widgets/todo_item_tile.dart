@@ -33,6 +33,98 @@ class TodoItemTile extends ConsumerWidget {
     }
   }
 
+  Widget _buildPriorityBadge(BuildContext context) {
+    final theme = Theme.of(context);
+    String label;
+    Color bgColor;
+    Color textColor;
+
+    switch (todo.priority) {
+      case TodoPriority.high:
+        label = 'High';
+        bgColor = theme.colorScheme.errorContainer;
+        textColor = theme.colorScheme.onErrorContainer;
+        break;
+      case TodoPriority.medium:
+        label = 'Medium';
+        bgColor = theme.colorScheme.tertiaryContainer;
+        textColor = theme.colorScheme.onTertiaryContainer;
+        break;
+      case TodoPriority.low:
+      default:
+        label = 'Low';
+        bgColor = theme.colorScheme.secondaryContainer;
+        textColor = theme.colorScheme.onSecondaryContainer;
+        break;
+    }
+
+    if (todo.isCompleted) {
+      bgColor = theme.colorScheme.surfaceVariant.withOpacity(0.5);
+      textColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.4);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: textColor,
+        ),
+      ),
+    );
+  }
+
+  Widget? _buildDueDateBadge(BuildContext context) {
+    if (todo.dueDate == null) return null;
+    final theme = Theme.of(context);
+
+    // Calculate if overdue
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final taskDue = DateTime(todo.dueDate!.year, todo.dueDate!.month, todo.dueDate!.day);
+    final isOverdue = !todo.isCompleted && taskDue.isBefore(today);
+
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    final dateStr = 'Due: ${months[todo.dueDate!.month - 1]} ${todo.dueDate!.day}';
+
+    Color textColor;
+    IconData icon;
+
+    if (isOverdue) {
+      textColor = theme.colorScheme.error;
+      icon = Icons.warning_amber_rounded;
+    } else {
+      textColor = todo.isCompleted
+          ? theme.colorScheme.onSurfaceVariant.withOpacity(0.4)
+          : theme.colorScheme.onSurfaceVariant;
+      icon = Icons.calendar_today_rounded;
+    }
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 12.0,
+          color: textColor,
+        ),
+        const SizedBox(width: 4.0),
+        Text(
+          dateStr,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: textColor,
+            fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -93,7 +185,7 @@ class TodoItemTile extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 16.0),
-              // Task Title, Date and Description
+              // Task Title, Metadata wrap and Description
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,31 +202,43 @@ class TodoItemTile extends ConsumerWidget {
                             : TextDecoration.none,
                       ),
                     ),
-                    const SizedBox(height: 2.0),
-                    // Formatted Timestamp
-                    Row(
+                    const SizedBox(height: 6.0),
+                    // Responsive Metadata wrap
+                    Wrap(
+                      spacing: 12.0,
+                      runSpacing: 6.0,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 12.0,
-                          color: isCompleted
-                              ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
-                              : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                        _buildPriorityBadge(context),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.access_time_rounded,
+                              size: 12.0,
+                              color: isCompleted
+                                  ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                                  : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                            ),
+                            const SizedBox(width: 4.0),
+                            Text(
+                              _formatDateTime(todo.createdAt),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: isCompleted
+                                    ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                                    : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 4.0),
-                        Text(
-                          _formatDateTime(todo.createdAt),
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: isCompleted
-                                ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
-                                : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        if (todo.dueDate != null) ...[
+                          _buildDueDateBadge(context)!,
+                        ],
                       ],
                     ),
                     if (todo.description.isNotEmpty) ...[
-                      const SizedBox(height: 6.0),
+                      const SizedBox(height: 8.0),
                       Text(
                         todo.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -170,7 +274,6 @@ class TodoItemTile extends ConsumerWidget {
                 color: theme.colorScheme.error.withOpacity(0.8),
                 tooltip: 'Delete task',
                 onPressed: () async {
-                  // Show premium Material 3 confirmation dialog
                   final confirmDelete = await showDialog<bool>(
                     context: context,
                     builder: (context) => AlertDialog(

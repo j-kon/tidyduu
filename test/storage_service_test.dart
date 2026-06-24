@@ -29,6 +29,8 @@ void main() {
         description: 'Task desc',
         isCompleted: true,
         createdAt: testDate,
+        priority: TodoPriority.high,
+        dueDate: testDate,
       );
 
       final success = await storageService.saveTodos([todo]);
@@ -43,11 +45,13 @@ void main() {
       expect(decoded.first['id'], '123');
       expect(decoded.first['title'], 'Task title');
       expect(decoded.first['isCompleted'], isTrue);
+      expect(decoded.first['priority'], 'high');
+      expect(decoded.first['dueDate'], testDate.toIso8601String());
     });
 
     test('loadTodos deserializes saved tasks correctly', () async {
-      final todo1 = Todo(id: '1', title: 'Task 1', createdAt: testDate);
-      final todo2 = Todo(id: '2', title: 'Task 2', isCompleted: true, createdAt: testDate);
+      final todo1 = Todo(id: '1', title: 'Task 1', createdAt: testDate, priority: TodoPriority.low);
+      final todo2 = Todo(id: '2', title: 'Task 2', isCompleted: true, createdAt: testDate, dueDate: testDate);
 
       await storageService.saveTodos([todo1, todo2]);
 
@@ -57,10 +61,36 @@ void main() {
       expect(loaded[0].id, '1');
       expect(loaded[0].title, 'Task 1');
       expect(loaded[0].isCompleted, isFalse);
+      expect(loaded[0].priority, TodoPriority.low);
+      expect(loaded[0].dueDate, isNull);
 
       expect(loaded[1].id, '2');
       expect(loaded[1].title, 'Task 2');
       expect(loaded[1].isCompleted, isTrue);
+      expect(loaded[1].priority, TodoPriority.medium);
+      expect(loaded[1].dueDate, testDate);
+    });
+
+    test('loadTodos successfully parses legacy JSON without priority or dueDate fields', () async {
+      // Create legacy JSON directly (no priority or dueDate fields)
+      final legacyJson = [
+        {
+          'id': 'legacy-1',
+          'title': 'Legacy Task',
+          'description': 'Legacy Desc',
+          'isCompleted': false,
+          'createdAt': testDate.toIso8601String(),
+        }
+      ];
+      await prefs.setString(todosKey, jsonEncode(legacyJson));
+
+      final loaded = storageService.loadTodos();
+      expect(loaded.length, 1);
+      expect(loaded.first.id, 'legacy-1');
+      expect(loaded.first.title, 'Legacy Task');
+      // Fallback defaults:
+      expect(loaded.first.priority, TodoPriority.medium);
+      expect(loaded.first.dueDate, isNull);
     });
 
     test('loadTodos returns empty list and handles exception if JSON is corrupted', () async {

@@ -4,6 +4,7 @@ import 'package:tidyduu/models/todo.dart';
 void main() {
   group('Todo Model Unit Tests', () {
     final testDate = DateTime(2026, 6, 24, 12, 0);
+    final dueTestDate = DateTime(2026, 6, 28, 12, 0);
 
     test('Instantiation sets correct fields', () {
       final todo = Todo(
@@ -12,6 +13,8 @@ void main() {
         description: 'Task Description',
         isCompleted: true,
         createdAt: testDate,
+        priority: TodoPriority.high,
+        dueDate: dueTestDate,
       );
 
       expect(todo.id, '123');
@@ -19,9 +22,11 @@ void main() {
       expect(todo.description, 'Task Description');
       expect(todo.isCompleted, isTrue);
       expect(todo.createdAt, testDate);
+      expect(todo.priority, TodoPriority.high);
+      expect(todo.dueDate, dueTestDate);
     });
 
-    test('Instantiation defaults isCompleted to false and description to empty string', () {
+    test('Instantiation defaults correctly', () {
       final todo = Todo(
         id: '123',
         title: 'Task Title',
@@ -30,6 +35,8 @@ void main() {
 
       expect(todo.isCompleted, isFalse);
       expect(todo.description, '');
+      expect(todo.priority, TodoPriority.medium);
+      expect(todo.dueDate, isNull);
     });
 
     test('copyWith modifies specific fields while retaining others', () {
@@ -39,16 +46,23 @@ void main() {
         description: 'Original Desc',
         isCompleted: false,
         createdAt: testDate,
+        priority: TodoPriority.low,
+        dueDate: dueTestDate,
       );
 
+      // Copy with priority change and clearing due date
       final updated = original.copyWith(
         title: 'Updated Title',
         isCompleted: true,
+        priority: TodoPriority.high,
+        dueDate: () => null, // Reset due date to null
       );
 
       // Changed fields
       expect(updated.title, 'Updated Title');
       expect(updated.isCompleted, isTrue);
+      expect(updated.priority, TodoPriority.high);
+      expect(updated.dueDate, isNull);
 
       // Unchanged fields
       expect(updated.id, '123');
@@ -63,6 +77,8 @@ void main() {
         description: 'Task Desc',
         isCompleted: false,
         createdAt: testDate,
+        priority: TodoPriority.medium,
+        dueDate: dueTestDate,
       );
 
       final json = todo.toJson();
@@ -73,6 +89,8 @@ void main() {
         'description': 'Task Desc',
         'isCompleted': false,
         'createdAt': testDate.toIso8601String(),
+        'priority': 'medium',
+        'dueDate': dueTestDate.toIso8601String(),
       });
     });
 
@@ -83,6 +101,8 @@ void main() {
         'description': 'Task Desc',
         'isCompleted': true,
         'createdAt': testDate.toIso8601String(),
+        'priority': 'high',
+        'dueDate': dueTestDate.toIso8601String(),
       };
 
       final todo = Todo.fromJson(json);
@@ -92,6 +112,8 @@ void main() {
       expect(todo.description, 'Task Desc');
       expect(todo.isCompleted, isTrue);
       expect(todo.createdAt, testDate);
+      expect(todo.priority, TodoPriority.high);
+      expect(todo.dueDate, dueTestDate);
     });
   });
 }

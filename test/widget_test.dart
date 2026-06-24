@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tidyduu/main.dart';
+import 'package:tidyduu/models/todo.dart';
 import 'package:tidyduu/providers/todo_provider.dart';
 
 void main() {
@@ -80,6 +81,36 @@ void main() {
     expect(find.text('New Task'), findsNothing);
     expect(find.text('Learn Flutter Testing'), findsOneWidget);
     expect(find.text('Practice widget tests'), findsOneWidget);
+  });
+
+  testWidgets('A task can be added with High priority through the UI', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // Open add task bottom sheet
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    // Enter text in title field
+    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'High Priority Task');
+    await tester.pumpAndSettle();
+
+    // Tap 'High' priority segment
+    final highSegment = find.descendant(
+      of: find.byType(SegmentedButton<TodoPriority>),
+      matching: find.text('High'),
+    );
+    expect(highSegment, findsOneWidget);
+    await tester.tap(highSegment);
+    await tester.pumpAndSettle();
+
+    // Tap Create button
+    await tester.tap(find.text('Create'));
+    await tester.pumpAndSettle();
+
+    // Verify task tile is rendered on screen with 'High' priority badge
+    expect(find.text('High'), findsOneWidget);
+    expect(find.text('High Priority Task'), findsOneWidget);
   });
 
   testWidgets('An empty task cannot be added through the UI and validation triggers', (WidgetTester tester) async {

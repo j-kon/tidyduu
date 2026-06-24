@@ -54,7 +54,12 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     state = _storageService.loadTodos();
   }
 
-  void addTodo(String title, {String description = ''}) {
+  void addTodo(
+    String title, {
+    String description = '',
+    TodoPriority priority = TodoPriority.medium,
+    DateTime? dueDate,
+  }) {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
 
@@ -63,6 +68,8 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       title: trimmedTitle,
       description: description.trim(),
       createdAt: DateTime.now(),
+      priority: priority,
+      dueDate: dueDate,
     );
     state = [...state, newTodo];
     _storageService.saveTodos(state);
@@ -79,14 +86,25 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     _storageService.saveTodos(state);
   }
 
-  void editTodo(String id, String newTitle, {String newDescription = ''}) {
+  void editTodo(
+    String id,
+    String newTitle, {
+    String newDescription = '',
+    TodoPriority? newPriority,
+    DateTime? Function()? newDueDate,
+  }) {
     final trimmedTitle = newTitle.trim();
     if (trimmedTitle.isEmpty) return;
 
     state = [
       for (final todo in state)
         if (todo.id == id)
-          todo.copyWith(title: trimmedTitle, description: newDescription.trim())
+          todo.copyWith(
+            title: trimmedTitle,
+            description: newDescription.trim(),
+            priority: newPriority,
+            dueDate: newDueDate,
+          )
         else
           todo
     ];
@@ -114,15 +132,44 @@ final filteredTodoListProvider = Provider<List<Todo>>((ref) {
   final todos = ref.watch(todoListProvider);
   final filter = ref.watch(todoFilterProvider);
 
+  List<Todo> filtered;
   switch (filter) {
     case TodoFilter.completed:
-      return todos.where((todo) => todo.isCompleted).toList();
+      filtered = todos.where((todo) => todo.isCompleted).toList();
+      break;
     case TodoFilter.active:
-      return todos.where((todo) => !todo.isCompleted).toList();
+      filtered = todos.where((todo) => !todo.isCompleted).toList();
+      break;
     case TodoFilter.all:
     default:
-      return todos;
+      filtered = todos;
+      break;
   }
+
+  // Sort tasks:
+  // 1. Completed stay lower
+  // 2. High priority first (high -> index 2, medium -> index 1, low -> index 0)
+  // 3. Nearest due date first
+  // 4. Fallback: newest created first
+  return filtered..sort((a, b) {
+    if (a.isCompleted != b.isCompleted) {
+      return a.isCompleted ? 1 : -1;
+    }
+
+    if (a.priority != b.priority) {
+      return b.priority.index.compareTo(a.priority.index);
+    }
+
+    if (a.dueDate != null && b.dueDate != null) {
+      return a.dueDate!.compareTo(b.dueDate!);
+    } else if (a.dueDate != null) {
+      return -1;
+    } else if (b.dueDate != null) {
+      return 1;
+    }
+
+    return b.createdAt.compareTo(a.createdAt);
+  });
 });
 
 // Provider that calculates stats of the todo list
