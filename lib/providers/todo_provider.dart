@@ -59,6 +59,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     String description = '',
     TodoPriority priority = TodoPriority.medium,
     DateTime? dueDate,
+    TodoCategory category = TodoCategory.other,
   }) {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
@@ -70,6 +71,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       createdAt: DateTime.now(),
       priority: priority,
       dueDate: dueDate,
+      category: category,
     );
     state = [...state, newTodo];
     _storageService.saveTodos(state);
@@ -92,6 +94,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     String newDescription = '',
     TodoPriority? newPriority,
     DateTime? Function()? newDueDate,
+    TodoCategory? newCategory,
   }) {
     final trimmedTitle = newTitle.trim();
     if (trimmedTitle.isEmpty) return;
@@ -104,6 +107,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
             description: newDescription.trim(),
             priority: newPriority,
             dueDate: newDueDate,
+            category: newCategory,
           )
         else
           todo
@@ -127,23 +131,42 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
 // StateProvider for the active filter
 final todoFilterProvider = StateProvider<TodoFilter>((ref) => TodoFilter.all);
 
+// StateProvider for the active category filter (null means all categories)
+final todoCategoryFilterProvider = StateProvider<TodoCategory?>((ref) => null);
+
+// StateProvider for the search query
+final todoSearchQueryProvider = StateProvider<String>((ref) => '');
+
 // Provider that calculates current filters and returns matching todos
 final filteredTodoListProvider = Provider<List<Todo>>((ref) {
   final todos = ref.watch(todoListProvider);
   final filter = ref.watch(todoFilterProvider);
+  final categoryFilter = ref.watch(todoCategoryFilterProvider);
+  final searchQuery = ref.watch(todoSearchQueryProvider).trim().toLowerCase();
 
-  List<Todo> filtered;
+  List<Todo> filtered = todos;
+
+  // 1. Status Filter
   switch (filter) {
     case TodoFilter.completed:
-      filtered = todos.where((todo) => todo.isCompleted).toList();
+      filtered = filtered.where((todo) => todo.isCompleted).toList();
       break;
     case TodoFilter.active:
-      filtered = todos.where((todo) => !todo.isCompleted).toList();
+      filtered = filtered.where((todo) => !todo.isCompleted).toList();
       break;
     case TodoFilter.all:
     default:
-      filtered = todos;
       break;
+  }
+
+  // 2. Category Filter
+  if (categoryFilter != null) {
+    filtered = filtered.where((todo) => todo.category == categoryFilter).toList();
+  }
+
+  // 3. Search Query Filter (by title, case-insensitive)
+  if (searchQuery.isNotEmpty) {
+    filtered = filtered.where((todo) => todo.title.toLowerCase().contains(searchQuery)).toList();
   }
 
   // Sort tasks:

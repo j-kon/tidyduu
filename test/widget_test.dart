@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tidyduu/main.dart';
 import 'package:tidyduu/models/todo.dart';
 import 'package:tidyduu/providers/todo_provider.dart';
+import 'package:tidyduu/widgets/todo_item_tile.dart';
 
 void main() {
   late SharedPreferences prefs;
@@ -74,6 +75,7 @@ void main() {
     // Tap Create button
     final createBtn = find.text('Create');
     expect(createBtn, findsOneWidget);
+    await tester.ensureVisible(createBtn);
     await tester.tap(createBtn);
     await tester.pumpAndSettle();
 
@@ -83,7 +85,7 @@ void main() {
     expect(find.text('Practice widget tests'), findsOneWidget);
   });
 
-  testWidgets('A task can be added with High priority through the UI', (WidgetTester tester) async {
+  testWidgets('A task can be added with High priority and Study category through the UI', (WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
     await tester.pumpAndSettle();
 
@@ -92,7 +94,17 @@ void main() {
     await tester.pumpAndSettle();
 
     // Enter text in title field
-    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'High Priority Task');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'High Priority Study Task');
+    await tester.pumpAndSettle();
+
+    // Select 'Study' category choice chip
+    final studyChip = find.descendant(
+      of: find.byType(ChoiceChip),
+      matching: find.text('Study'),
+    );
+    expect(studyChip, findsOneWidget);
+    await tester.ensureVisible(studyChip);
+    await tester.tap(studyChip);
     await tester.pumpAndSettle();
 
     // Tap 'High' priority segment
@@ -101,16 +113,20 @@ void main() {
       matching: find.text('High'),
     );
     expect(highSegment, findsOneWidget);
+    await tester.ensureVisible(highSegment);
     await tester.tap(highSegment);
     await tester.pumpAndSettle();
 
     // Tap Create button
-    await tester.tap(find.text('Create'));
+    final createBtn = find.text('Create');
+    await tester.ensureVisible(createBtn);
+    await tester.tap(createBtn);
     await tester.pumpAndSettle();
 
-    // Verify task tile is rendered on screen with 'High' priority badge
-    expect(find.text('High'), findsOneWidget);
-    expect(find.text('High Priority Task'), findsOneWidget);
+    // Verify task tile is rendered on screen with badges
+    expect(find.descendant(of: find.byType(TodoItemTile), matching: find.text('High')), findsOneWidget);
+    expect(find.descendant(of: find.byType(TodoItemTile), matching: find.text('Study')), findsOneWidget);
+    expect(find.text('High Priority Study Task'), findsOneWidget);
   });
 
   testWidgets('An empty task cannot be added through the UI and validation triggers', (WidgetTester tester) async {
@@ -123,6 +139,7 @@ void main() {
 
     // Tap Create button without entering title
     final createBtn = find.text('Create');
+    await tester.ensureVisible(createBtn);
     await tester.tap(createBtn);
     await tester.pumpAndSettle();
 
@@ -132,11 +149,72 @@ void main() {
     expect(find.text('New Task'), findsOneWidget);
 
     // Cancel out
-    await tester.tap(find.text('Cancel'));
+    final cancelBtn = find.text('Cancel');
+    await tester.ensureVisible(cancelBtn);
+    await tester.tap(cancelBtn);
     await tester.pumpAndSettle();
 
     // Verify dialog is closed and task is not added
     expect(find.text('New Task'), findsNothing);
     expect(find.text('Clear mind, clean slate'), findsOneWidget);
+  });
+
+  testWidgets('Tasks can be searched and filtered by category in the UI', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // 1. Add "Buy Milk" under "Errands"
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'Buy Milk');
+    final errandsChip = find.descendant(of: find.byType(ChoiceChip), matching: find.text('Errands'));
+    await tester.ensureVisible(errandsChip);
+    await tester.tap(errandsChip);
+    await tester.pumpAndSettle();
+    final createBtn1 = find.text('Create');
+    await tester.ensureVisible(createBtn1);
+    await tester.tap(createBtn1);
+    await tester.pumpAndSettle();
+
+    // 2. Add "Study Flutter" under "Study"
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'Study Flutter');
+    final studyChip = find.descendant(of: find.byType(ChoiceChip), matching: find.text('Study'));
+    await tester.ensureVisible(studyChip);
+    await tester.tap(studyChip);
+    await tester.pumpAndSettle();
+    final createBtn2 = find.text('Create');
+    await tester.ensureVisible(createBtn2);
+    await tester.tap(createBtn2);
+    await tester.pumpAndSettle();
+
+    // Verify both are present on the Home screen
+    expect(find.text('Buy Milk'), findsOneWidget);
+    expect(find.text('Study Flutter'), findsOneWidget);
+
+    // 3. Search for "Milk"
+    final searchField = find.byType(TextField);
+    expect(searchField, findsOneWidget);
+    await tester.enterText(searchField, 'Milk');
+    await tester.pumpAndSettle();
+
+    // Verify "Buy Milk" is present, but "Study Flutter" is filtered out
+    expect(find.text('Buy Milk'), findsOneWidget);
+    expect(find.text('Study Flutter'), findsNothing);
+
+    // Clear search
+    await tester.enterText(searchField, '');
+    await tester.pumpAndSettle();
+    expect(find.text('Study Flutter'), findsOneWidget);
+
+    // 4. Tap "Study" Category Filter Chip
+    final studyFilterChip = find.text('Study').first;
+    await tester.tap(studyFilterChip);
+    await tester.pumpAndSettle();
+
+    // Verify "Study Flutter" is present, but "Buy Milk" is filtered out
+    expect(find.text('Study Flutter'), findsOneWidget);
+    expect(find.text('Buy Milk'), findsNothing);
   });
 }

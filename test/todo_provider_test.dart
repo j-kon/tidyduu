@@ -232,5 +232,79 @@ void main() {
       expect(sorted[3].title, 'Low Priority, today');
       expect(sorted[4].title, 'Completed task');
     });
+
+    test('Filtering by category returns correct lists', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo('Personal Task 1', category: TodoCategory.personal);
+      notifier.addTodo('Work Task 1', category: TodoCategory.work);
+      notifier.addTodo('Study Task 1', category: TodoCategory.study);
+
+      // Default category filter (All Categories / null)
+      expect(container.read(filteredTodoListProvider).length, 3);
+
+      // Filter by Work
+      container.read(todoCategoryFilterProvider.notifier).state = TodoCategory.work;
+      final workList = container.read(filteredTodoListProvider);
+      expect(workList.length, 1);
+      expect(workList.first.title, 'Work Task 1');
+
+      // Filter by Study
+      container.read(todoCategoryFilterProvider.notifier).state = TodoCategory.study;
+      final studyList = container.read(filteredTodoListProvider);
+      expect(studyList.length, 1);
+      expect(studyList.first.title, 'Study Task 1');
+    });
+
+    test('Searching by title matches case-insensitive and filters lists', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo('Buy groceries');
+      notifier.addTodo('Groceries shopping');
+      notifier.addTodo('Clean bedroom');
+
+      // Search for "groceries"
+      container.read(todoSearchQueryProvider.notifier).state = 'groceries';
+      final searchResult1 = container.read(filteredTodoListProvider);
+      expect(searchResult1.length, 2);
+      expect(searchResult1.any((t) => t.title == 'Buy groceries'), isTrue);
+      expect(searchResult1.any((t) => t.title == 'Groceries shopping'), isTrue);
+
+      // Search for "SHOP" (case-insensitive)
+      container.read(todoSearchQueryProvider.notifier).state = 'SHOP';
+      final searchResult2 = container.read(filteredTodoListProvider);
+      expect(searchResult2.length, 1);
+      expect(searchResult2.first.title, 'Groceries shopping');
+    });
+
+    test('Searching, category filtering, and status filtering work in combination', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo('Buy milk', category: TodoCategory.errands); // active, errands
+      notifier.addTodo('Buy coffee', category: TodoCategory.errands); // active, errands
+      notifier.addTodo('Clean office', category: TodoCategory.work); // active, work
+
+      final todos = container.read(todoListProvider);
+      // Mark 'Buy milk' as completed
+      notifier.toggleTodo(todos[0].id); // completed, errands
+
+      // Filter: Status=Active, Category=Errands, Search="Buy"
+      container.read(todoFilterProvider.notifier).state = TodoFilter.active;
+      container.read(todoCategoryFilterProvider.notifier).state = TodoCategory.errands;
+      container.read(todoSearchQueryProvider.notifier).state = 'Buy';
+
+      final result = container.read(filteredTodoListProvider);
+      expect(result.length, 1);
+      expect(result.first.title, 'Buy coffee');
+    });
   });
 }

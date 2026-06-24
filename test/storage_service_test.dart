@@ -47,6 +47,7 @@ void main() {
       expect(decoded.first['isCompleted'], isTrue);
       expect(decoded.first['priority'], 'high');
       expect(decoded.first['dueDate'], testDate.toIso8601String());
+      expect(decoded.first['category'], 'other');
     });
 
     test('loadTodos deserializes saved tasks correctly', () async {
@@ -91,6 +92,7 @@ void main() {
       // Fallback defaults:
       expect(loaded.first.priority, TodoPriority.medium);
       expect(loaded.first.dueDate, isNull);
+      expect(loaded.first.category, TodoCategory.other);
     });
 
     test('loadTodos returns empty list and handles exception if JSON is corrupted', () async {

@@ -5,11 +5,33 @@ import '../widgets/add_edit_dialog.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/todo_item_tile.dart';
 
-class HomeScreen extends ConsumerWidget {
+import '../models/todo.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref; // so we don't have to change other WidgetRef references, wait! In ConsumerState.build, the ref field is directly available, but let's double check. Yes, ref is a field of ConsumerState.
     final theme = Theme.of(context);
     final filteredTodos = ref.watch(filteredTodoListProvider);
     final activeFilter = ref.watch(todoFilterProvider);
@@ -120,6 +142,65 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
 
+            // Search Bar Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) => ref.read(todoSearchQueryProvider.notifier).state = value,
+                style: theme.textTheme.bodyMedium,
+                decoration: InputDecoration(
+                  hintText: 'Search tasks...',
+                  prefixIcon: Icon(Icons.search_rounded, color: theme.colorScheme.primary, size: 20.0),
+                  suffixIcon: ref.watch(todoSearchQueryProvider).isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear_rounded, size: 20.0),
+                          onPressed: () {
+                            _searchController.clear();
+                            ref.read(todoSearchQueryProvider.notifier).state = '';
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 0.0, horizontal: 16.0),
+                ),
+              ),
+            ),
+
+            // Category Chips Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 6.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _CategoryFilterChip(
+                      label: 'All Categories',
+                      icon: Icons.grid_view_rounded,
+                      isSelected: ref.watch(todoCategoryFilterProvider) == null,
+                      onTap: () => ref.read(todoCategoryFilterProvider.notifier).state = null,
+                    ),
+                    ...TodoCategory.values.map((category) {
+                      return Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: _CategoryFilterChip(
+                          label: _getCategoryLabel(category),
+                          icon: _getCategoryIcon(category),
+                          isSelected: ref.watch(todoCategoryFilterProvider) == category,
+                          onTap: () => ref.read(todoCategoryFilterProvider.notifier).state = category,
+                        ),
+                      );
+                    }).toList(),
+                  ],
+                ),
+              ),
+            ),
+
             // Filter Chips Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
@@ -185,6 +266,36 @@ class HomeScreen extends ConsumerWidget {
       ),
     );
   }
+
+  String _getCategoryLabel(TodoCategory cat) {
+    switch (cat) {
+      case TodoCategory.personal:
+        return 'Personal';
+      case TodoCategory.work:
+        return 'Work';
+      case TodoCategory.study:
+        return 'Study';
+      case TodoCategory.errands:
+        return 'Errands';
+      case TodoCategory.other:
+        return 'Other';
+    }
+  }
+
+  IconData _getCategoryIcon(TodoCategory cat) {
+    switch (cat) {
+      case TodoCategory.personal:
+        return Icons.person_rounded;
+      case TodoCategory.work:
+        return Icons.work_rounded;
+      case TodoCategory.study:
+        return Icons.menu_book_rounded;
+      case TodoCategory.errands:
+        return Icons.shopping_bag_rounded;
+      case TodoCategory.other:
+        return Icons.category_rounded;
+    }
+  }
 }
 
 class _FilterChip extends StatelessWidget {
@@ -245,6 +356,62 @@ class _FilterChip extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                   color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurfaceVariant,
                 ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryFilterChip extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _CategoryFilterChip({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(20.0),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 8.0),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primaryContainer
+              : theme.colorScheme.surfaceVariant.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(20.0),
+          border: Border.all(
+            color: isSelected ? theme.colorScheme.primary : theme.colorScheme.outlineVariant.withOpacity(0.5),
+            width: 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16.0,
+              color: isSelected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant,
+            ),
+            const SizedBox(width: 6.0),
+            Text(
+              label,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? theme.colorScheme.onPrimaryContainer : theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ],

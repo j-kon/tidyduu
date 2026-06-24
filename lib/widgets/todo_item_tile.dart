@@ -79,6 +79,79 @@ class TodoItemTile extends ConsumerWidget {
     );
   }
 
+  Widget _buildCategoryBadge(BuildContext context) {
+    final theme = Theme.of(context);
+    String label;
+    IconData icon;
+    Color bgColor;
+    Color textColor;
+
+    switch (todo.category) {
+      case TodoCategory.personal:
+        label = 'Personal';
+        icon = Icons.person_rounded;
+        bgColor = theme.colorScheme.primaryContainer;
+        textColor = theme.colorScheme.onPrimaryContainer;
+        break;
+      case TodoCategory.work:
+        label = 'Work';
+        icon = Icons.work_rounded;
+        bgColor = theme.colorScheme.secondaryContainer;
+        textColor = theme.colorScheme.onSecondaryContainer;
+        break;
+      case TodoCategory.study:
+        label = 'Study';
+        icon = Icons.menu_book_rounded;
+        bgColor = theme.colorScheme.tertiaryContainer;
+        textColor = theme.colorScheme.onTertiaryContainer;
+        break;
+      case TodoCategory.errands:
+        label = 'Errands';
+        icon = Icons.shopping_bag_rounded;
+        bgColor = Colors.teal.shade100;
+        textColor = Colors.teal.shade900;
+        break;
+      case TodoCategory.other:
+      default:
+        label = 'Other';
+        icon = Icons.category_rounded;
+        bgColor = theme.colorScheme.surfaceVariant;
+        textColor = theme.colorScheme.onSurfaceVariant;
+        break;
+    }
+
+    if (todo.isCompleted) {
+      bgColor = theme.colorScheme.surfaceVariant.withOpacity(0.5);
+      textColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.4);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 12.0,
+            color: textColor,
+          ),
+          const SizedBox(width: 4.0),
+          Text(
+            label,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget? _buildDueDateBadge(BuildContext context) {
     if (todo.dueDate == null) return null;
     final theme = Theme.of(context);
@@ -209,6 +282,7 @@ class TodoItemTile extends ConsumerWidget {
                       runSpacing: 6.0,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        _buildCategoryBadge(context),
                         _buildPriorityBadge(context),
                         Row(
                           mainAxisSize: MainAxisSize.min,

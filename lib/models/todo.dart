@@ -4,6 +4,14 @@ enum TodoPriority {
   high,
 }
 
+enum TodoCategory {
+  personal,
+  work,
+  study,
+  errands,
+  other,
+}
+
 class Todo {
   final String id;
   final String title;
@@ -12,6 +20,7 @@ class Todo {
   final DateTime createdAt;
   final TodoPriority priority;
   final DateTime? dueDate;
+  final TodoCategory category;
 
   Todo({
     required this.id,
@@ -21,6 +30,7 @@ class Todo {
     required this.createdAt,
     this.priority = TodoPriority.medium,
     this.dueDate,
+    this.category = TodoCategory.other,
   });
 
   Todo copyWith({
@@ -31,6 +41,7 @@ class Todo {
     DateTime? createdAt,
     TodoPriority? priority,
     DateTime? Function()? dueDate,
+    TodoCategory? category,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -40,6 +51,7 @@ class Todo {
       createdAt: createdAt ?? this.createdAt,
       priority: priority ?? this.priority,
       dueDate: dueDate != null ? dueDate() : this.dueDate,
+      category: category ?? this.category,
     );
   }
 
@@ -52,6 +64,7 @@ class Todo {
       'createdAt': createdAt.toIso8601String(),
       'priority': priority.name,
       'dueDate': dueDate?.toIso8601String(),
+      'category': category.name,
     };
   }
 
@@ -67,6 +80,13 @@ class Todo {
     final dueDateStr = json['dueDate'] as String?;
     final dueDate = dueDateStr != null ? DateTime.tryParse(dueDateStr) : null;
 
+    // Parse category safely with default fallback for backward compatibility
+    final categoryStr = json['category'] as String?;
+    final category = TodoCategory.values.firstWhere(
+      (e) => e.name == categoryStr,
+      orElse: () => TodoCategory.other,
+    );
+
     return Todo(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -75,6 +95,7 @@ class Todo {
       createdAt: DateTime.parse(json['createdAt'] as String),
       priority: priority,
       dueDate: dueDate,
+      category: category,
     );
   }
 }

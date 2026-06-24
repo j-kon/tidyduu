@@ -21,6 +21,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   late final TextEditingController _descriptionController;
   late TodoPriority _selectedPriority;
   DateTime? _selectedDueDate;
+  late TodoCategory _selectedCategory;
 
   @override
   void initState() {
@@ -29,6 +30,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     _descriptionController = TextEditingController(text: widget.todo?.description ?? '');
     _selectedPriority = widget.todo?.priority ?? TodoPriority.medium;
     _selectedDueDate = widget.todo?.dueDate;
+    _selectedCategory = widget.todo?.category ?? TodoCategory.other;
   }
 
   @override
@@ -47,6 +49,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           description: _descriptionController.text,
           priority: _selectedPriority,
           dueDate: _selectedDueDate,
+          category: _selectedCategory,
         );
       } else {
         notifier.editTodo(
@@ -55,6 +58,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           newDescription: _descriptionController.text,
           newPriority: _selectedPriority,
           newDueDate: () => _selectedDueDate,
+          newCategory: _selectedCategory,
         );
       }
       Navigator.of(context).pop();
@@ -82,7 +86,11 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
       ),
       child: Form(
         key: _formKey,
-        child: SingleChildScrollView(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85 - MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -145,6 +153,57 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                   prefixIcon: const Icon(Icons.notes_rounded),
                   alignLabelWithHint: true,
                 ),
+              ),
+              const SizedBox(height: 20.0),
+              // Category Selection
+              Text(
+                'Category',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 8.0),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: TodoCategory.values.map((category) {
+                  final isSelected = _selectedCategory == category;
+                  return ChoiceChip(
+                    label: Text(_getCategoryLabel(category)),
+                    avatar: Icon(
+                      _getCategoryIcon(category),
+                      size: 16.0,
+                      color: isSelected
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() {
+                          _selectedCategory = category;
+                        });
+                      }
+                    },
+                    selectedColor: theme.colorScheme.primary,
+                    labelStyle: TextStyle(
+                      color: isSelected
+                          ? theme.colorScheme.onPrimary
+                          : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                    backgroundColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                      side: BorderSide(
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outlineVariant.withOpacity(0.5),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
               const SizedBox(height: 20.0),
               // Priority Selection
@@ -271,6 +330,37 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           ),
         ),
       ),
+    ),
     );
+  }
+
+  String _getCategoryLabel(TodoCategory cat) {
+    switch (cat) {
+      case TodoCategory.personal:
+        return 'Personal';
+      case TodoCategory.work:
+        return 'Work';
+      case TodoCategory.study:
+        return 'Study';
+      case TodoCategory.errands:
+        return 'Errands';
+      case TodoCategory.other:
+        return 'Other';
+    }
+  }
+
+  IconData _getCategoryIcon(TodoCategory cat) {
+    switch (cat) {
+      case TodoCategory.personal:
+        return Icons.person_rounded;
+      case TodoCategory.work:
+        return Icons.work_rounded;
+      case TodoCategory.study:
+        return Icons.menu_book_rounded;
+      case TodoCategory.errands:
+        return Icons.shopping_bag_rounded;
+      case TodoCategory.other:
+        return Icons.category_rounded;
+    }
   }
 }
