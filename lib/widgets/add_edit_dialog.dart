@@ -22,6 +22,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   late TodoPriority _selectedPriority;
   DateTime? _selectedDueDate;
   late TodoCategory _selectedCategory;
+  late bool _selectedIsToday;
 
   @override
   void initState() {
@@ -29,8 +30,25 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     _titleController = TextEditingController(text: widget.todo?.title ?? '');
     _descriptionController = TextEditingController(text: widget.todo?.description ?? '');
     _selectedPriority = widget.todo?.priority ?? TodoPriority.medium;
-    _selectedDueDate = widget.todo?.dueDate;
     _selectedCategory = widget.todo?.category ?? TodoCategory.other;
+
+    if (widget.todo == null) {
+      final activeTab = ref.read(appTabProvider);
+      if (activeTab == AppTab.today) {
+        final now = DateTime.now();
+        _selectedDueDate = DateTime(now.year, now.month, now.day);
+        _selectedIsToday = true;
+      } else if (activeTab == AppTab.calendar) {
+        _selectedDueDate = ref.read(calendarSelectedDateProvider);
+        _selectedIsToday = false;
+      } else {
+        _selectedDueDate = null;
+        _selectedIsToday = false;
+      }
+    } else {
+      _selectedDueDate = widget.todo!.dueDate;
+      _selectedIsToday = widget.todo!.isToday;
+    }
   }
 
   @override
@@ -50,6 +68,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           priority: _selectedPriority,
           dueDate: _selectedDueDate,
           category: _selectedCategory,
+          isToday: _selectedIsToday,
         );
       } else {
         notifier.editTodo(
@@ -59,6 +78,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           newPriority: _selectedPriority,
           newDueDate: () => _selectedDueDate,
           newCategory: _selectedCategory,
+          newIsToday: _selectedIsToday,
         );
       }
       Navigator.of(context).pop();
@@ -70,21 +90,20 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     final theme = Theme.of(context);
     final isEditing = widget.todo != null;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(28.0),
-          topRight: Radius.circular(28.0),
+    return Material(
+      color: theme.colorScheme.surface,
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(28.0),
+        topRight: Radius.circular(28.0),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: 8.0,
+          left: 24.0,
+          right: 24.0,
+          bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
         ),
-      ),
-      padding: EdgeInsets.only(
-        top: 8.0,
-        left: 24.0,
-        right: 24.0,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
-      ),
-      child: Form(
+        child: Form(
         key: _formKey,
         child: ConstrainedBox(
           constraints: BoxConstraints(
@@ -292,7 +311,31 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                   ],
                 ],
               ),
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 16.0),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(
+                  "Add to Today's Tasks",
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                subtitle: Text(
+                  "Shows task in your Today view",
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
+                  ),
+                ),
+                value: _selectedIsToday,
+                activeColor: theme.colorScheme.primary,
+                onChanged: (value) {
+                  setState(() {
+                    _selectedIsToday = value;
+                  });
+                },
+              ),
+              const SizedBox(height: 20.0),
               // Action Buttons
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -330,6 +373,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           ),
         ),
       ),
+    ),
     ),
     );
   }

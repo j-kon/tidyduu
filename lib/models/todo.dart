@@ -21,6 +21,7 @@ class Todo {
   final TodoPriority priority;
   final DateTime? dueDate;
   final TodoCategory category;
+  final bool isToday;
 
   Todo({
     required this.id,
@@ -31,6 +32,7 @@ class Todo {
     this.priority = TodoPriority.medium,
     this.dueDate,
     this.category = TodoCategory.other,
+    this.isToday = false,
   });
 
   Todo copyWith({
@@ -42,6 +44,7 @@ class Todo {
     TodoPriority? priority,
     DateTime? Function()? dueDate,
     TodoCategory? category,
+    bool? isToday,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -52,6 +55,7 @@ class Todo {
       priority: priority ?? this.priority,
       dueDate: dueDate != null ? dueDate() : this.dueDate,
       category: category ?? this.category,
+      isToday: isToday ?? this.isToday,
     );
   }
 
@@ -65,6 +69,7 @@ class Todo {
       'priority': priority.name,
       'dueDate': dueDate?.toIso8601String(),
       'category': category.name,
+      'isToday': isToday,
     };
   }
 
@@ -87,6 +92,9 @@ class Todo {
       orElse: () => TodoCategory.other,
     );
 
+    // Parse isToday safely with default fallback for backward compatibility
+    final isToday = (json['isToday'] ?? false) as bool;
+
     return Todo(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -96,6 +104,7 @@ class Todo {
       priority: priority,
       dueDate: dueDate,
       category: category,
+      isToday: isToday,
     );
   }
 }

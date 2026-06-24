@@ -79,6 +79,49 @@ class TodoItemTile extends ConsumerWidget {
     );
   }
 
+  Widget? _buildTodayBadge(BuildContext context) {
+    if (!todo.isToday) return null;
+    final theme = Theme.of(context);
+
+    Color bgColor = theme.colorScheme.primaryContainer.withOpacity(0.3);
+    Color textColor = theme.colorScheme.primary;
+
+    if (todo.isCompleted) {
+      bgColor = theme.colorScheme.surfaceVariant.withOpacity(0.5);
+      textColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.4);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(
+          color: textColor.withOpacity(0.3),
+          width: 1.0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.wb_sunny_rounded,
+            size: 12.0,
+            color: textColor,
+          ),
+          const SizedBox(width: 4.0),
+          Text(
+            'Today',
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: textColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCategoryBadge(BuildContext context) {
     final theme = Theme.of(context);
     String label;
@@ -282,6 +325,7 @@ class TodoItemTile extends ConsumerWidget {
                       runSpacing: 6.0,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
+                        if (todo.isToday) _buildTodayBadge(context)!,
                         _buildCategoryBadge(context),
                         _buildPriorityBadge(context),
                         Row(
@@ -330,6 +374,17 @@ class TodoItemTile extends ConsumerWidget {
               ),
               const SizedBox(width: 8.0),
               // Action Buttons
+              IconButton(
+                icon: Icon(
+                  todo.isToday ? Icons.wb_sunny_rounded : Icons.wb_sunny_outlined,
+                  size: 20.0,
+                ),
+                color: todo.isToday ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                tooltip: todo.isToday ? 'Remove from Today' : 'Add to Today',
+                onPressed: () {
+                  ref.read(todoListProvider.notifier).toggleToday(todo.id);
+                },
+              ),
               IconButton(
                 icon: const Icon(Icons.edit_outlined, size: 20.0),
                 color: theme.colorScheme.onSurfaceVariant,

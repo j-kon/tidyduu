@@ -16,6 +16,7 @@ void main() {
         priority: TodoPriority.high,
         dueDate: dueTestDate,
         category: TodoCategory.work,
+        isToday: true,
       );
 
       expect(todo.id, '123');
@@ -26,6 +27,7 @@ void main() {
       expect(todo.priority, TodoPriority.high);
       expect(todo.dueDate, dueTestDate);
       expect(todo.category, TodoCategory.work);
+      expect(todo.isToday, isTrue);
     });
 
     test('Instantiation defaults correctly', () {
@@ -40,6 +42,7 @@ void main() {
       expect(todo.priority, TodoPriority.medium);
       expect(todo.dueDate, isNull);
       expect(todo.category, TodoCategory.other);
+      expect(todo.isToday, isFalse);
     });
 
     test('copyWith modifies specific fields while retaining others', () {
@@ -52,15 +55,17 @@ void main() {
         priority: TodoPriority.low,
         dueDate: dueTestDate,
         category: TodoCategory.personal,
+        isToday: false,
       );
 
-      // Copy with priority, category change and clearing due date
+      // Copy with priority, category, isToday change and clearing due date
       final updated = original.copyWith(
         title: 'Updated Title',
         isCompleted: true,
         priority: TodoPriority.high,
         dueDate: () => null, // Reset due date to null
         category: TodoCategory.study,
+        isToday: true,
       );
 
       // Changed fields
@@ -69,6 +74,7 @@ void main() {
       expect(updated.priority, TodoPriority.high);
       expect(updated.dueDate, isNull);
       expect(updated.category, TodoCategory.study);
+      expect(updated.isToday, isTrue);
 
       // Unchanged fields
       expect(updated.id, '123');
@@ -86,6 +92,7 @@ void main() {
         priority: TodoPriority.medium,
         dueDate: dueTestDate,
         category: TodoCategory.errands,
+        isToday: true,
       );
 
       final json = todo.toJson();
@@ -99,6 +106,7 @@ void main() {
         'priority': 'medium',
         'dueDate': dueTestDate.toIso8601String(),
         'category': 'errands',
+        'isToday': true,
       });
     });
 
@@ -112,6 +120,7 @@ void main() {
         'priority': 'high',
         'dueDate': dueTestDate.toIso8601String(),
         'category': 'personal',
+        'isToday': true,
       };
 
       final todo = Todo.fromJson(json);
@@ -124,10 +133,11 @@ void main() {
       expect(todo.priority, TodoPriority.high);
       expect(todo.dueDate, dueTestDate);
       expect(todo.category, TodoCategory.personal);
+      expect(todo.isToday, isTrue);
     });
 
-    test('fromJson parses legacy JSON safely defaulting category', () {
-      // Legacy JSON from early app versions without category field
+    test('fromJson parses legacy JSON safely defaulting category and isToday', () {
+      // Legacy JSON from early app versions without category or isToday field
       final json = {
         'id': '123',
         'title': 'Task Title',
@@ -141,6 +151,7 @@ void main() {
       expect(todo.id, '123');
       expect(todo.title, 'Task Title');
       expect(todo.category, TodoCategory.other); // Defaulted fallback
+      expect(todo.isToday, isFalse); // Defaulted fallback
     });
   });
 }

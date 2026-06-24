@@ -60,6 +60,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     TodoPriority priority = TodoPriority.medium,
     DateTime? dueDate,
     TodoCategory category = TodoCategory.other,
+    bool isToday = false,
   }) {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
@@ -72,6 +73,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       priority: priority,
       dueDate: dueDate,
       category: category,
+      isToday: isToday,
     );
     state = [...state, newTodo];
     _storageService.saveTodos(state);
@@ -88,6 +90,17 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     _storageService.saveTodos(state);
   }
 
+  void toggleToday(String id) {
+    state = [
+      for (final todo in state)
+        if (todo.id == id)
+          todo.copyWith(isToday: !todo.isToday)
+        else
+          todo
+    ];
+    _storageService.saveTodos(state);
+  }
+
   void editTodo(
     String id,
     String newTitle, {
@@ -95,6 +108,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     TodoPriority? newPriority,
     DateTime? Function()? newDueDate,
     TodoCategory? newCategory,
+    bool? newIsToday,
   }) {
     final trimmedTitle = newTitle.trim();
     if (trimmedTitle.isEmpty) return;
@@ -108,6 +122,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
             priority: newPriority,
             dueDate: newDueDate,
             category: newCategory,
+            isToday: newIsToday,
           )
         else
           todo
@@ -207,4 +222,90 @@ final todoStatsProvider = Provider<TodoStats>((ref) {
     activeCount: activeCount,
     completedCount: completedCount,
   );
+});
+
+enum AppTab {
+  tasks,
+  today,
+  calendar,
+}
+
+// Navigation Tab Provider
+final appTabProvider = StateProvider<AppTab>((ref) => AppTab.tasks);
+
+// Selected date for Calendar view (without time)
+final calendarSelectedDateProvider = StateProvider<DateTime>((ref) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month, now.day);
+});
+
+// Helper function to check if two dates are the same day (ignoring time)
+bool _isSameDay(DateTime? a, DateTime b) {
+  if (a == null) return false;
+  return a.year == b.year && a.month == b.month && a.day == b.day;
+}
+
+// Provider for Today tasks:
+// Show tasks due today OR marked as isToday.
+final todayTodoListProvider = Provider<List<Todo>>((ref) {
+  final todos = ref.watch(todoListProvider);
+  final today = DateTime.now();
+  final todayStart = DateTime(today.year, today.month, today.day);
+
+  final filtered = todos.where((todo) {
+    return _isSameDay(todo.dueDate, todayStart) || todo.isToday;
+  }).toList();
+
+  // Sort: completed bottom, then priority, then due date, then newest created
+  return filtered..sort((a, b) {
+    if (a.isCompleted != b.isCompleted) {
+      return a.isCompleted ? 1 : -1;
+    }
+    if (a.priority != b.priority) {
+      return b.priority.index.compareTo(a.priority.index);
+    }
+    if (a.dueDate != null && b.dueDate != null) {
+      return a.dueDate!.compareTo(b.dueDate!);
+    } else if (a.dueDate != null) {
+      return -1;
+    } else if (b.dueDate != null) {
+      return 1;
+    }
+    return b.createdAt.compareTo(a.createdAt);
+  });
+});
+
+// Provider that calculates stats of the today's todo list
+final todayStatsProvider = Provider<TodoStats>((ref) {
+  final todos = ref.watch(todayTodoListProvider);
+  final totalCount = todos.length;
+  final completedCount = todos.where((todo) => todo.isCompleted).length;
+  final activeCount = totalCount - completedCount;
+
+  return TodoStats(
+    totalCount: totalCount,
+    activeCount: activeCount,
+    completedCount: completedCount,
+  );
+});
+
+// Provider for Calendar tasks for selected date
+final calendarTodoListProvider = Provider<List<Todo>>((ref) {
+  final todos = ref.watch(todoListProvider);
+  final selectedDate = ref.watch(calendarSelectedDateProvider);
+
+  final filtered = todos.where((todo) {
+    return _isSameDay(todo.dueDate, selectedDate);
+  }).toList();
+
+  // Sort: completed bottom, then priority, then newest created
+  return filtered..sort((a, b) {
+    if (a.isCompleted != b.isCompleted) {
+      return a.isCompleted ? 1 : -1;
+    }
+    if (a.priority != b.priority) {
+      return b.priority.index.compareTo(a.priority.index);
+    }
+    return b.createdAt.compareTo(a.createdAt);
+  });
 });

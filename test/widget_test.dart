@@ -217,4 +217,106 @@ void main() {
     expect(find.text('Study Flutter'), findsOneWidget);
     expect(find.text('Buy Milk'), findsNothing);
   });
+
+  testWidgets('Navigation to Today and Calendar tabs works and displays correct empty states', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // Verify initial state is on Tasks tab
+    expect(find.text('Task Progress'), findsOneWidget);
+
+    // Navigate to Today tab using NavigationBar specifically
+    final todayTab = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Today'),
+    );
+    expect(todayTab, findsOneWidget);
+    await tester.tap(todayTab);
+    await tester.pumpAndSettle();
+
+    // Verify Today view is shown
+    expect(find.text("Today's Focus"), findsOneWidget);
+    expect(find.text('Nothing due today'), findsOneWidget);
+
+    // Navigate to Calendar tab using NavigationBar specifically
+    final calendarTab = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Calendar'),
+    );
+    expect(calendarTab, findsOneWidget);
+    await tester.tap(calendarTab);
+    await tester.pumpAndSettle();
+
+    // Verify Calendar view is shown
+    expect(find.text('No tasks for this date'), findsOneWidget);
+  });
+
+  testWidgets('Toggling isToday on task tile in Tasks tab syncs to Today tab', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // Add a task
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'Important Today Task');
+    final createBtn = find.text('Create');
+    await tester.ensureVisible(createBtn);
+    await tester.tap(createBtn);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Important Today Task'), findsOneWidget);
+
+    // Tap the sun icon/button to toggle isToday
+    final todayIconButton = find.byTooltip('Add to Today');
+    expect(todayIconButton, findsOneWidget);
+    await tester.tap(todayIconButton);
+    await tester.pumpAndSettle();
+
+    // The tooltip should change to 'Remove from Today'
+    expect(find.byTooltip('Remove from Today'), findsOneWidget);
+
+    // Navigate to Today tab and verify the task is present there
+    final todayTab = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Today'),
+    );
+    await tester.tap(todayTab);
+    await tester.pumpAndSettle();
+
+    expect(find.text("Today's Focus"), findsOneWidget);
+    expect(find.text('Important Today Task'), findsOneWidget);
+    expect(find.text('Nothing due today'), findsNothing);
+  });
+
+  testWidgets('Adding a task in Calendar view prepopulates the due date with selected date', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // Go to Calendar view
+    final calendarTab = find.descendant(
+      of: find.byType(NavigationBar),
+      matching: find.text('Calendar'),
+    );
+    await tester.tap(calendarTab);
+    await tester.pumpAndSettle();
+
+    // Find a day in the calendar grid to tap, say day 20
+    final day20Text = find.text('20');
+    expect(day20Text, findsWidgets);
+    await tester.tap(day20Text.first);
+    await tester.pumpAndSettle();
+
+    // Tap Add Task FAB
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    // Verify the due date button has the preselected date "20"
+    expect(find.textContaining('Due: 20/'), findsOneWidget);
+    
+    // Close dialog
+    final cancelBtn = find.text('Cancel');
+    await tester.ensureVisible(cancelBtn);
+    await tester.tap(cancelBtn);
+    await tester.pumpAndSettle();
+  });
 }

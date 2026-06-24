@@ -306,5 +306,88 @@ void main() {
       expect(result.length, 1);
       expect(result.first.title, 'Buy coffee');
     });
+
+    test('toggleToday changes isToday status', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo('Today Task');
+      final todoId = container.read(todoListProvider).first.id;
+
+      expect(container.read(todoListProvider).first.isToday, isFalse);
+
+      notifier.toggleToday(todoId);
+      expect(container.read(todoListProvider).first.isToday, isTrue);
+
+      notifier.toggleToday(todoId);
+      expect(container.read(todoListProvider).first.isToday, isFalse);
+    });
+
+    test('todayTodoListProvider filters and todayStatsProvider calculates correctly', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day);
+      final tomorrow = todayStart.add(const Duration(days: 1));
+
+      // Task 1: Due today, active
+      notifier.addTodo('Due Today Task', dueDate: todayStart);
+      // Task 2: Not due today, but isToday=true, active
+      notifier.addTodo('Starred Today Task', isToday: true, dueDate: tomorrow);
+      // Task 3: Due today, completed
+      notifier.addTodo('Due Today Completed Task', dueDate: todayStart);
+      // Task 4: Not due today, isToday=false, active
+      notifier.addTodo('Future Task', dueDate: tomorrow);
+
+      final todos = container.read(todoListProvider);
+      // Toggle Task 3 to completed
+      final task3Id = todos.firstWhere((t) => t.title == 'Due Today Completed Task').id;
+      notifier.toggleTodo(task3Id);
+
+      // Verify todayTodoListProvider has 3 items (Task 1, 2, 3)
+      final todayList = container.read(todayTodoListProvider);
+      expect(todayList.length, 3);
+      expect(todayList.any((t) => t.title == 'Due Today Task'), isTrue);
+      expect(todayList.any((t) => t.title == 'Starred Today Task'), isTrue);
+      expect(todayList.any((t) => t.title == 'Due Today Completed Task'), isTrue);
+      expect(todayList.any((t) => t.title == 'Future Task'), isFalse);
+
+      // Verify stats
+      final stats = container.read(todayStatsProvider);
+      expect(stats.totalCount, 3);
+      expect(stats.completedCount, 1);
+      expect(stats.activeCount, 2);
+    });
+
+    test('calendarTodoListProvider filters correctly based on calendarSelectedDateProvider', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      final today = DateTime.now();
+      final todayStart = DateTime(today.year, today.month, today.day);
+      final tomorrow = todayStart.add(const Duration(days: 1));
+
+      notifier.addTodo('Today Task 1', dueDate: todayStart);
+      notifier.addTodo('Today Task 2', dueDate: todayStart);
+      notifier.addTodo('Tomorrow Task', dueDate: tomorrow);
+
+      // By default calendarSelectedDateProvider is today
+      final calendarListToday = container.read(calendarTodoListProvider);
+      expect(calendarListToday.length, 2);
+      expect(calendarListToday.any((t) => t.title == 'Tomorrow Task'), isFalse);
+
+      // Change calendarSelectedDateProvider to tomorrow
+      container.read(calendarSelectedDateProvider.notifier).state = tomorrow;
+      final calendarListTomorrow = container.read(calendarTodoListProvider);
+      expect(calendarListTomorrow.length, 1);
+      expect(calendarListTomorrow.first.title, 'Tomorrow Task');
+    });
   });
 }
