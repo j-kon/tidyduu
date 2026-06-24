@@ -1,122 +1,151 @@
-# TidyDuu 💜
+<p align="center">
+  <img src="assets/icon/app_icon.png" width="120" height="120" alt="TidyDuu Logo" style="border-radius: 28px;"/>
+</p>
 
-A premium, sleek, and production-ready Material 3 task management application built with Flutter. TidyDuu blends clean aesthetics, modern state management, and local productivity features into a highly responsive, distraction-free todo experience for both iOS and Android.
+<h1 align="center">TidyDuu</h1>
 
----
+<p align="center">
+  <strong>A premium, sleek, and production-ready Material 3 task management application built with Flutter.</strong>
+</p>
 
-## ✨ Features
-
-- **📂 Smart Categories**: Organise tasks into *Work, Study, Personal, Errands,* or *Other*.
-- **⚡ Priority Levels**: Set *Low, Medium,* or *High* priority for each task, with automatic sorting ensuring urgent items remain at the top.
-- **📅 Due Dates & Calendar**: Select due dates with a native picker and view tasks on a bespoke custom grid calendar screen.
-- **☀️ Today Focus View**: A dedicated focus view showcasing only today's tasks with an interactive progress indicator.
-- **🔔 Local Notifications**: Receive task reminders (At due time, 10m, 1h, or 1d before) using local notifications.
-- **🔍 Quick Search**: Search tasks by title dynamically in combination with category or completion filters.
-- **🌓 Adaptive Theme**: Support for OS-level Light and Dark modes utilizing Material 3 design tokens.
-- **💾 Offline-First**: Reliable persistence using local `SharedPreferences` with custom serialization and backward-compatible fallbacks.
-
----
-
-## 🛠️ Tech Stack
-
-- **Framework**: [Flutter](https://flutter.dev) (Dart)
-- **State Management**: [Riverpod](https://riverpod.dev) (StateNotifier, StateProvider)
-- **Local Storage**: [SharedPreferences](https://pub.dev/packages/shared_preferences)
-- **Local Notifications**: [Flutter Local Notifications](https://pub.dev/packages/flutter_local_notifications)
-- **Timezones**: [Timezone](https://pub.dev/packages/timezone)
-- **Design System**: Material 3 (with custom brand palettes)
+<p align="center">
+  <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white" alt="Flutter Badge"/>
+  <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white" alt="Dart Badge"/>
+  <img src="https://img.shields.io/badge/Platform-Android%20%7C%20iOS-000000" alt="Platform Badge"/>
+  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License Badge"/>
+</p>
 
 ---
 
-## 📁 Codebase Architecture
+## 📖 Introduction
 
-The project adheres to a clean, scalable folder structure designed to separate data, state, services, and UI:
+TidyDuu is a modern, distraction-free task coordinator designed for busy professionals. By prioritizing clean layouts, fluid animations, and a structured local-first data lifecycle, TidyDuu serves as a high-quality portfolio template demonstrating Flutter best practices in **Clean Architecture**, **State Management (Riverpod)**, **Platform Reminders**, and **OS-native personalization**.
+
+---
+
+## 🎨 Brand & UI Showcase
+
+TidyDuu uses a signature modern indigo-purple palette (`0xFF5E5CE6` light, `0xFF7D7AFF` dark) combined with custom card contours, elevation-free layouts, and responsive components.
+
+| Tasks Grid View (Light) | Today Focus View (Dark) | Custom Calendar View |
+| :---: | :---: | :---: |
+| *[Placeholder for Tasks View]*<br/>`assets/screenshots/home_light.png` | *[Placeholder for Today View]*<br/>`assets/screenshots/home_dark.png` | *[Placeholder for Calendar View]*<br/>`assets/screenshots/calendar_view.png` |
+
+*To replace these placeholders, capture screenshots of your running app and place them in the [assets/screenshots/](assets/screenshots/) folder matching the filenames above.*
+
+---
+
+## 🚀 Key Features
+
+- **📂 Smart Classification**: Group tasks instantly under *Personal, Work, Study, Errands*, or *Other* categories.
+- **⚡ Priority Sorting**: Auto-arrange tasks by priority (*Low, Medium, High*).
+- **📅 Custom Grid Calendar**: Visualize task volume by date on a bespoke grid calendar built using pure Flutter, avoiding dependency conflicts.
+- **☀️ Today Focus**: A dedicated progress cockpit compiling tasks due today or marked for today, featuring a dynamic progress bar.
+- **🔔 Task Reminders & Notifications**: Configure local alerts (At due time, 10m, 1h, 1d before) integrated with `flutter_local_notifications` and exact scheduling.
+- **🔍 Text Search & Multi-Filters**: Filter and search through active/completed tasks by title instantly.
+- **🌓 Native Dark Theme**: Smooth OS-level light/dark theme transitions leveraging Material 3 color schemes.
+
+---
+
+## 📁 Clean Codebase Architecture
+
+TidyDuu employs a feature-first, layer-separated architecture to ensure modular scalability and clear boundaries:
 
 ```text
 lib/
-├── main.dart                 # App Entry Point & Dependency Overrides
+├── main.dart                 # App initialization, services bootstrapping, & scopes
 ├── models/
-│   └── todo.dart             # Todo Model & Enums Extensions (Icons, Colors, Labels)
+│   └── todo.dart             # Pure data entities & rich enum extensions (UX resources)
 ├── providers/
-│   └── todo_provider.dart    # Riverpod State Notifiers and Filtered Selectors
+│   └── todo_provider.dart    # Riverpod state notifiers, business rules, & UI filters
 ├── theme/
-│   └── app_theme.dart        # Centralized Light and Dark Material 3 Themes
+│   └── app_theme.dart        # Central light & dark Material 3 theme configurations
 ├── services/
-│   ├── storage_service.dart  # Local JSON Persistence Wrapper
-│   └── notification_service.dart # Platform Local Notifications Manager
+│   ├── storage_service.dart  # Custom SharedPreferences JSON persistence layer
+│   └── notification_service.dart # Local notifications wrapper and exact alarm Scheduler
 ├── screens/
-│   ├── home_screen.dart      # Shell Navigator (Bottom Navigation Bar & FAB)
-│   ├── tasks_tab.dart        # All Tasks Tab (Filters, Search, Progress)
-│   ├── today_tab.dart        # Today Focus Tab (Progress, Sun Empty State)
-│   └── calendar_tab.dart     # Custom Grid Calendar Tab
+│   ├── home_screen.dart      # Navigation Shell coordinates tabs
+│   ├── tasks_tab.dart        # Main dashboard list tab
+│   ├── today_tab.dart        # Today focus tab
+│   └── calendar_tab.dart     # Custom Grid Calendar tab
 └── widgets/
-    ├── add_edit_dialog.dart  # Task Creation & Modification Dialog Sheet
-    ├── empty_state.dart      # Standardized Custom Empty States
-    ├── filter_chips.dart     # Modular Filter & Category Selection Chips
-    └── todo_item_tile.dart   # Polished Modern Task Card Widget (Semantic a11y)
+    ├── add_edit_dialog.dart  # Form dialog for task CRUD operations
+    ├── empty_state.dart      # Universal custom state widgets
+    ├── filter_chips.dart     # Reusable custom filter and category chips
+    └── todo_item_tile.dart   # Polished Modern Task Card (TalkBack/VoiceOver optimized)
 ```
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ Technical Design Details
 
-### Prerequisites
+### 1. State Management (Riverpod)
+TidyDuu utilizes **Riverpod 2.x** for dependency injection and state mutation:
+- `todoListProvider` (backed by `TodoListNotifier`) manages the collection of todos. It coordinates persistence triggers and notifies the `NotificationService` whenever changes occur.
+- Combined filtered outputs (`filteredTodoListProvider`, `todayTodoListProvider`, `calendarTodoListProvider`) calculate sorted sub-states automatically on task operations, keeping UI render trees thin and efficient.
 
-Ensure you have the Flutter SDK installed on your system.
+### 2. Local-First Storage (Offline Persistence)
+Local persistence is managed via `StorageService` using a `SharedPreferences` backend:
+- Task structures are converted using custom `toJson` maps and stored as a JSON list.
+- **Backward Compatibility**: Factory methods in `Todo` safely deserialize legacy JSON models. Missing fields (e.g., categories or reminders) default gracefully to fallback states, preventing system crashes during app updates.
 
-```bash
-flutter --version
-```
-
-### Installation
-
-1. Clone the repository.
-2. Fetch dependencies:
-   ```bash
-   flutter pub get
-   ```
-
-### Running the App
-
-- **Start connected emulators/simulators** (e.g., Android emulator or iOS simulator).
-- **Run on a specific device**:
-  ```bash
-  flutter run -d <device-id>
-  ```
-- **Run on all devices**:
-  ```bash
-  flutter run -d all
-  ```
+### 3. Alarm Reminders & Timezone Scheduling
+Reminders leverage `flutter_local_notifications` combined with the `timezone` database:
+- The `NotificationService` handles native channel setups, scheduling exact alarms, and requesting runtime permission.
+- Native channels are configured on Android with `SCHEDULE_EXACT_ALARM` permissions.
+- In iOS, the `UNUserNotificationCenter` delegate is initialized within `AppDelegate.swift` to show notifications alerts in the foreground.
 
 ---
 
-## 🧪 Testing & Verification
+## 🧪 Testing & Code Quality
 
-TidyDuu has a comprehensive test suite covering models, persistence layers, providers, and widget interactions.
+TidyDuu includes a comprehensive test suite targeting models, storage, state modifications, and widget trees.
 
 ### Run Static Analysis
-Ensure code compiles cleanly with zero warnings or lint errors:
+Verify that all source files conform to standard code rules with zero errors or warnings:
 ```bash
 flutter analyze
 ```
 
-### Run All Unit and Widget Tests
-Execute tests and verify correctness:
+### Run Automated Tests
+Execute the full unit, state provider, storage, and widget integration test suite:
 ```bash
 flutter test
 ```
 
-### Format Code
-Check code compliance with standard Dart formatting rules:
+### Auto-Format Code
+Conform project formatting to standard Dart constraints:
 ```bash
 dart format .
 ```
 
 ---
 
-## 🔮 Future Improvements
+## 🚀 How to Run the App
 
-- **☁️ Cloud Sync**: Integrate Firebase/Firestore or PostgreSQL for cross-device synchronization.
-- **🔄 Recurring Tasks**: Support daily, weekly, or monthly repeating chores.
-- **🏷️ Custom Categories**: Allow users to create custom categories with custom icons and color schemes.
-- **📊 Productivity Analytics**: Introduce charts displaying task completion history and streak counts.
+1. Ensure the Flutter SDK is installed and configured on your system path.
+2. Clone this repository.
+3. Fetch dependencies:
+   ```bash
+   flutter pub get
+   ```
+4. Start an Android emulator or iOS simulator.
+5. Compile and launch the app in debug mode:
+   ```bash
+   flutter run
+   ```
+
+---
+
+## 🔮 Future Roadmap
+
+- [ ] **Cross-Device Cloud Sync**: Back data with Firebase Firestore or Supabase database streams.
+- [ ] **Custom Tag Categories**: Let users create custom tags with custom colors and icons.
+- [ ] **Productivity Metrics**: Add line/bar graphs showing monthly progress histories.
+- [ ] **Sub-task Checklists**: Support splitting larger tasks into checklists.
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
