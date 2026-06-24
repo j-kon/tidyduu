@@ -52,6 +52,28 @@ void main() {
       expect(loaded.first.title, 'Buy milk');
     });
 
+    test('Cannot add or edit todo with empty or whitespace title', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      
+      // Attempt to add empty title
+      notifier.addTodo('   ');
+      expect(container.read(todoListProvider), isEmpty);
+
+      // Add a valid todo
+      notifier.addTodo('Valid Task');
+      expect(container.read(todoListProvider).length, 1);
+      final todoId = container.read(todoListProvider).first.id;
+
+      // Attempt to edit to an empty title
+      notifier.editTodo(todoId, '   ');
+      // Title should remain unchanged
+      expect(container.read(todoListProvider).first.title, 'Valid Task');
+    });
+
     test('Toggle todo changes completion status', () {
       final container = createContainer(overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
@@ -94,6 +116,25 @@ void main() {
 
       notifier.deleteTodo(todoId);
       expect(container.read(todoListProvider), isEmpty);
+    });
+
+    test('Restore todo adds it back to state', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo('Undo Task');
+      final todo = container.read(todoListProvider).first;
+
+      notifier.deleteTodo(todo.id);
+      expect(container.read(todoListProvider), isEmpty);
+
+      notifier.restoreTodo(todo);
+      final restored = container.read(todoListProvider);
+      expect(restored.length, 1);
+      expect(restored.first.id, todo.id);
+      expect(restored.first.title, 'Undo Task');
     });
 
     test('Filtering returns correct lists', () {

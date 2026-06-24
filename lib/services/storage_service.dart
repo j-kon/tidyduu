@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/todo.dart';
 
@@ -9,22 +10,27 @@ class StorageService {
   StorageService(this._prefs);
 
   List<Todo> loadTodos() {
-    final String? todosJson = _prefs.getString(_todosKey);
-    if (todosJson == null) {
-      return [];
-    }
     try {
+      final String? todosJson = _prefs.getString(_todosKey);
+      if (todosJson == null) {
+        return [];
+      }
       final List<dynamic> decodedList = jsonDecode(todosJson) as List<dynamic>;
       return decodedList.map((item) => Todo.fromJson(item as Map<String, dynamic>)).toList();
-    } catch (e) {
-      // Return empty list if parsing fails
+    } catch (e, stackTrace) {
+      debugPrint('StorageService: Error loading todos: $e\n$stackTrace');
       return [];
     }
   }
 
   Future<bool> saveTodos(List<Todo> todos) async {
-    final List<Map<String, dynamic>> jsonList = todos.map((todo) => todo.toJson()).toList();
-    final String encoded = jsonEncode(jsonList);
-    return await _prefs.setString(_todosKey, encoded);
+    try {
+      final List<Map<String, dynamic>> jsonList = todos.map((todo) => todo.toJson()).toList();
+      final String encoded = jsonEncode(jsonList);
+      return await _prefs.setString(_todosKey, encoded);
+    } catch (e, stackTrace) {
+      debugPrint('StorageService: Error saving todos: $e\n$stackTrace');
+      return false;
+    }
   }
 }

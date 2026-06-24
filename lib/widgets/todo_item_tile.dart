@@ -12,6 +12,27 @@ class TodoItemTile extends ConsumerWidget {
     required this.todo,
   });
 
+  String _formatDateTime(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final taskDate = DateTime(dt.year, dt.month, dt.day);
+
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final hour = dt.hour == 0 ? 12 : (dt.hour > 12 ? dt.hour - 12 : dt.hour);
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final timeStr = '$hour:$minute $period';
+
+    if (taskDate == today) {
+      return 'Today at $timeStr';
+    } else if (taskDate == yesterday) {
+      return 'Yesterday at $timeStr';
+    } else {
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[dt.month - 1]} ${dt.day} at $timeStr';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -72,7 +93,7 @@ class TodoItemTile extends ConsumerWidget {
                 ),
               ),
               const SizedBox(width: 16.0),
-              // Task Title and Description
+              // Task Title, Date and Description
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,8 +110,31 @@ class TodoItemTile extends ConsumerWidget {
                             : TextDecoration.none,
                       ),
                     ),
+                    const SizedBox(height: 2.0),
+                    // Formatted Timestamp
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 12.0,
+                          color: isCompleted
+                              ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                              : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                        ),
+                        const SizedBox(width: 4.0),
+                        Text(
+                          _formatDateTime(todo.createdAt),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: isCompleted
+                                ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                                : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                     if (todo.description.isNotEmpty) ...[
-                      const SizedBox(height: 4.0),
+                      const SizedBox(height: 6.0),
                       Text(
                         todo.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -125,27 +169,69 @@ class TodoItemTile extends ConsumerWidget {
                 icon: const Icon(Icons.delete_outline_rounded, size: 20.0),
                 color: theme.colorScheme.error.withOpacity(0.8),
                 tooltip: 'Delete task',
-                onPressed: () {
-                  final notifier = ref.read(todoListProvider.notifier);
-                  notifier.deleteTodo(todo.id);
-
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('"${todo.title}" deleted'),
-                      behavior: SnackBarBehavior.floating,
+                onPressed: () async {
+                  // Show premium Material 3 confirmation dialog
+                  final confirmDelete = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: theme.colorScheme.error,
+                        size: 28.0,
+                      ),
+                      title: const Text('Delete Task?'),
+                      content: Text('Are you sure you want to delete "${todo.title}"? This cannot be undone.'),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12.0),
+                        borderRadius: BorderRadius.circular(24.0),
                       ),
-                      action: SnackBarAction(
-                        label: 'Undo',
-                        textColor: theme.colorScheme.primaryContainer,
-                        onPressed: () {
-                          notifier.restoreTodo(todo);
-                        },
-                      ),
+                      actionsAlignment: MainAxisAlignment.spaceEvenly,
+                      actions: [
+                        OutlinedButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          style: OutlinedButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                          ),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: theme.colorScheme.error,
+                            foregroundColor: theme.colorScheme.onError,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                          ),
+                          child: const Text('Delete'),
+                        ),
+                      ],
                     ),
                   );
+
+                  if (confirmDelete == true && context.mounted) {
+                    final notifier = ref.read(todoListProvider.notifier);
+                    notifier.deleteTodo(todo.id);
+
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('"${todo.title}" deleted'),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        action: SnackBarAction(
+                          label: 'Undo',
+                          textColor: theme.colorScheme.primaryContainer,
+                          onPressed: () {
+                            notifier.restoreTodo(todo);
+                          },
+                        ),
+                      ),
+                    );
+                  }
                 },
               ),
             ],

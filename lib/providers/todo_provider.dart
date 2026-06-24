@@ -55,9 +55,12 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
   }
 
   void addTodo(String title, {String description = ''}) {
+    final trimmedTitle = title.trim();
+    if (trimmedTitle.isEmpty) return;
+
     final newTodo = Todo(
       id: const Uuid().v4(),
-      title: title.trim(),
+      title: trimmedTitle,
       description: description.trim(),
       createdAt: DateTime.now(),
     );
@@ -77,10 +80,13 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
   }
 
   void editTodo(String id, String newTitle, {String newDescription = ''}) {
+    final trimmedTitle = newTitle.trim();
+    if (trimmedTitle.isEmpty) return;
+
     state = [
       for (final todo in state)
         if (todo.id == id)
-          todo.copyWith(title: newTitle.trim(), description: newDescription.trim())
+          todo.copyWith(title: trimmedTitle, description: newDescription.trim())
         else
           todo
     ];
