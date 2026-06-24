@@ -592,5 +592,118 @@ void main() {
       expect(fakeNotificationService.cancelledTodoIds.length, 1);
       expect(fakeNotificationService.cancelledTodoIds.first, todoId);
     });
+
+    test('addTodo saves subtasks, notes, and repeatOption', () {
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+
+      final notifier = container.read(todoListProvider.notifier);
+      final subtasks = [Subtask(id: 's1', title: 'Sub 1')];
+      notifier.addTodo(
+        'Main Task',
+        notes: 'Main notes',
+        subtasks: subtasks,
+        repeatOption: TodoRepeat.daily,
+      );
+
+      final todos = container.read(todoListProvider);
+      expect(todos.length, 1);
+      expect(todos.first.notes, 'Main notes');
+      expect(todos.first.subtasks.first.title, 'Sub 1');
+      expect(todos.first.repeatOption, TodoRepeat.daily);
+    });
+
+    test('toggleSubtask and subtask operations work correctly', () {
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo('Main Task');
+
+      final todoId = container.read(todoListProvider).first.id;
+
+      // Add subtask
+      notifier.addSubtask(todoId, 'Subtask 1');
+      expect(container.read(todoListProvider).first.subtasks.length, 1);
+      expect(
+        container.read(todoListProvider).first.subtasks.first.title,
+        'Subtask 1',
+      );
+      expect(
+        container.read(todoListProvider).first.subtasks.first.isCompleted,
+        isFalse,
+      );
+
+      final subtaskId = container
+          .read(todoListProvider)
+          .first
+          .subtasks
+          .first
+          .id;
+
+      // Edit subtask
+      notifier.editSubtask(todoId, subtaskId, 'Subtask 1 Edited');
+      expect(
+        container.read(todoListProvider).first.subtasks.first.title,
+        'Subtask 1 Edited',
+      );
+
+      // Toggle subtask
+      notifier.toggleSubtask(todoId, subtaskId);
+      expect(
+        container.read(todoListProvider).first.subtasks.first.isCompleted,
+        isTrue,
+      );
+
+      // Delete subtask
+      notifier.deleteSubtask(todoId, subtaskId);
+      expect(container.read(todoListProvider).first.subtasks, isEmpty);
+    });
+
+    test('toggleTodo on recurring task spawns next occurrence', () {
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+
+      final notifier = container.read(todoListProvider.notifier);
+      final dueDate = DateTime(2026, 6, 24, 10, 0);
+      notifier.addTodo(
+        'Daily Task',
+        dueDate: dueDate,
+        repeatOption: TodoRepeat.daily,
+        subtasks: [Subtask(id: 's1', title: 'Sub 1', isCompleted: true)],
+      );
+
+      final firstTodo = container.read(todoListProvider).first;
+      final firstTodoId = firstTodo.id;
+
+      fakeNotificationService.scheduledTodos.clear();
+
+      // Complete the task -> Should toggle original to completed, spawn next occurrence
+      notifier.toggleTodo(firstTodoId);
+
+      final todos = container.read(todoListProvider);
+      // Expect 2 todos: 1 completed, 1 new active
+      expect(todos.length, 2);
+
+      final completedTodo = todos.firstWhere((t) => t.id == firstTodoId);
+      expect(completedTodo.isCompleted, isTrue);
+
+      final spawnedTodo = todos.firstWhere((t) => t.id != firstTodoId);
+      expect(spawnedTodo.isCompleted, isFalse);
+      expect(spawnedTodo.title, 'Daily Task');
+      expect(spawnedTodo.repeatOption, TodoRepeat.daily);
+      expect(spawnedTodo.dueDate, dueDate.add(const Duration(days: 1)));
+      expect(
+        spawnedTodo.subtasks.first.isCompleted,
+        isFalse,
+      ); // resets subtasks completeness
+
+      // Verify notification scheduled for next occurrence
+      expect(fakeNotificationService.scheduledTodos.length, 1);
+      expect(fakeNotificationService.scheduledTodos.first.id, spawnedTodo.id);
+    });
   });
 }

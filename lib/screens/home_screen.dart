@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/todo_provider.dart';
 import '../widgets/add_edit_dialog.dart';
 import 'calendar_tab.dart';
@@ -18,7 +19,25 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 200),
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position:
+                    Tween<Offset>(
+                      begin: const Offset(0.0, 0.03),
+                      end: Offset.zero,
+                    ).animate(
+                      CurvedAnimation(
+                        parent: animation,
+                        curve: Curves.easeOutCubic,
+                      ),
+                    ),
+                child: child,
+              ),
+            );
+          },
           child: _buildBody(activeTab),
         ),
       ),
@@ -60,7 +79,7 @@ class HomeScreen extends ConsumerWidget {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-    );
+    ).animate().fadeIn(duration: 400.ms, curve: Curves.easeOut);
   }
 
   Widget _buildBody(AppTab activeTab) {

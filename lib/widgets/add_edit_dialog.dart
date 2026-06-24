@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:uuid/uuid.dart';
 import '../models/todo.dart';
 import '../providers/todo_provider.dart';
 
@@ -16,11 +18,16 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleController;
   late final TextEditingController _descriptionController;
+  late final TextEditingController _notesController;
+  late final TextEditingController _subtaskInputController;
+
   late TodoPriority _selectedPriority;
   DateTime? _selectedDueDate;
   late TodoCategory _selectedCategory;
   late bool _selectedIsToday;
   late TodoReminder _selectedReminder;
+  late TodoRepeat _selectedRepeat;
+  late List<Subtask> _localSubtasks;
 
   @override
   void initState() {
@@ -29,9 +36,16 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     _descriptionController = TextEditingController(
       text: widget.todo?.description ?? '',
     );
+    _notesController = TextEditingController(text: widget.todo?.notes ?? '');
+    _subtaskInputController = TextEditingController();
+
     _selectedPriority = widget.todo?.priority ?? TodoPriority.medium;
     _selectedCategory = widget.todo?.category ?? TodoCategory.other;
     _selectedReminder = widget.todo?.reminder ?? TodoReminder.none;
+    _selectedRepeat = widget.todo?.repeatOption ?? TodoRepeat.none;
+    _localSubtasks = widget.todo?.subtasks != null
+        ? List.from(widget.todo!.subtasks)
+        : [];
 
     if (widget.todo == null) {
       final activeTab = ref.read(appTabProvider);
@@ -56,6 +70,8 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
+    _notesController.dispose();
+    _subtaskInputController.dispose();
     super.dispose();
   }
 
@@ -81,6 +97,24 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     }
   }
 
+  void _addSubtask() {
+    final title = _subtaskInputController.text.trim();
+    if (title.isNotEmpty) {
+      setState(() {
+        _localSubtasks.add(
+          Subtask(id: const Uuid().v4(), title: title, isCompleted: false),
+        );
+      });
+      _subtaskInputController.clear();
+    }
+  }
+
+  void _removeSubtask(int index) {
+    setState(() {
+      _localSubtasks.removeAt(index);
+    });
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
       final notifier = ref.read(todoListProvider.notifier);
@@ -93,6 +127,9 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           category: _selectedCategory,
           isToday: _selectedIsToday,
           reminder: _selectedReminder,
+          notes: _notesController.text,
+          subtasks: _localSubtasks,
+          repeatOption: _selectedRepeat,
         );
       } else {
         notifier.editTodo(
@@ -104,6 +141,9 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           newCategory: _selectedCategory,
           newIsToday: _selectedIsToday,
           newReminder: _selectedReminder,
+          newNotes: _notesController.text,
+          newSubtasks: _localSubtasks,
+          newRepeatOption: _selectedRepeat,
         );
       }
       Navigator.of(context).pop();
@@ -164,45 +204,73 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                     ),
                   ),
                   const SizedBox(height: 20.0),
-                  // Title Field
-                  TextFormField(
-                    controller: _titleController,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.sentences,
-                    style: theme.textTheme.bodyLarge,
-                    decoration: InputDecoration(
-                      labelText: 'Task Title',
-                      hintText: 'What needs to be done?',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
+
+                  // Form fields (Staggered fade in entry)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Title Field
+                      TextFormField(
+                        controller: _titleController,
+                        autofocus: true,
+                        textCapitalization: TextCapitalization.sentences,
+                        style: theme.textTheme.bodyLarge,
+                        decoration: InputDecoration(
+                          labelText: 'Task Title',
+                          hintText: 'What needs to be done?',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          prefixIcon: const Icon(Icons.title_rounded),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Please enter a title';
+                          }
+                          return null;
+                        },
                       ),
-                      prefixIcon: const Icon(Icons.title_rounded),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a title';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 16.0),
-                  // Description Field
-                  TextFormField(
-                    controller: _descriptionController,
-                    textCapitalization: TextCapitalization.sentences,
-                    maxLines: 3,
-                    style: theme.textTheme.bodyLarge,
-                    decoration: InputDecoration(
-                      labelText: 'Description (Optional)',
-                      hintText: 'Add details or notes...',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
+                      const SizedBox(height: 16.0),
+
+                      // Description Field
+                      TextFormField(
+                        controller: _descriptionController,
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 2,
+                        style: theme.textTheme.bodyLarge,
+                        decoration: InputDecoration(
+                          labelText: 'Description (Optional)',
+                          hintText: 'Add details or notes...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          prefixIcon: const Icon(Icons.description_outlined),
+                          alignLabelWithHint: true,
+                        ),
                       ),
-                      prefixIcon: const Icon(Icons.notes_rounded),
-                      alignLabelWithHint: true,
-                    ),
-                  ),
+                      const SizedBox(height: 16.0),
+
+                      // Notes Field
+                      TextFormField(
+                        controller: _notesController,
+                        textCapitalization: TextCapitalization.sentences,
+                        maxLines: 3,
+                        style: theme.textTheme.bodyLarge,
+                        decoration: InputDecoration(
+                          labelText: 'Notes (Optional)',
+                          hintText: 'Add persistent reference text...',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.0),
+                          ),
+                          prefixIcon: const Icon(Icons.notes_rounded),
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(duration: 200.ms),
+
                   const SizedBox(height: 20.0),
+
                   // Category Selection
                   Text(
                     'Category',
@@ -259,6 +327,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                     }).toList(),
                   ),
                   const SizedBox(height: 20.0),
+
                   // Priority Selection
                   Text(
                     'Priority',
@@ -291,9 +360,10 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                     },
                   ),
                   const SizedBox(height: 20.0),
-                  // Due Date Selection
+
+                  // Due Date & Repeat Options
                   Text(
-                    'Due Date',
+                    'Due Date & Repeat Settings',
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: theme.colorScheme.onSurfaceVariant,
@@ -338,25 +408,49 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                             setState(() {
                               _selectedDueDate = null;
                               _selectedReminder = TodoReminder.none;
+                              _selectedRepeat = TodoRepeat.none;
                             });
                           },
                         ),
                       ],
                     ],
                   ),
+
+                  // Recurring task repeat picker (Only show when due date is set)
                   if (_selectedDueDate != null) ...[
                     const SizedBox(height: 16.0),
-                    Text(
-                      'Reminder',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
+                    DropdownButtonFormField<TodoRepeat>(
+                      value: _selectedRepeat,
+                      decoration: InputDecoration(
+                        labelText: 'Repeat Options',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        prefixIcon: const Icon(Icons.sync_rounded),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
                       ),
+                      items: TodoRepeat.values.map((repeat) {
+                        return DropdownMenuItem<TodoRepeat>(
+                          value: repeat,
+                          child: Text(repeat.label),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _selectedRepeat = value;
+                          });
+                        }
+                      },
                     ),
-                    const SizedBox(height: 8.0),
+                    const SizedBox(height: 16.0),
                     DropdownButtonFormField<TodoReminder>(
                       value: _selectedReminder,
                       decoration: InputDecoration(
+                        labelText: 'Reminders',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
                         ),
@@ -385,6 +479,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                     ),
                   ],
                   const SizedBox(height: 16.0),
+
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
@@ -411,6 +506,91 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                     },
                   ),
                   const SizedBox(height: 20.0),
+
+                  // Subtasks Builder Checklist inside Dialog
+                  Text(
+                    'Configure Subtasks',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 8.0),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _subtaskInputController,
+                          textCapitalization: TextCapitalization.sentences,
+                          decoration: InputDecoration(
+                            hintText: 'Add subtask title...',
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 12.0,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                          ),
+                          onSubmitted: (_) => _addSubtask(),
+                        ),
+                      ),
+                      const SizedBox(width: 8.0),
+                      IconButton.filled(
+                        icon: const Icon(Icons.add_rounded),
+                        onPressed: _addSubtask,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8.0),
+
+                  if (_localSubtasks.isNotEmpty) ...[
+                    Container(
+                      padding: const EdgeInsets.all(8.0),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceVariant.withOpacity(
+                          0.2,
+                        ),
+                        borderRadius: BorderRadius.circular(12.0),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant.withOpacity(
+                            0.5,
+                          ),
+                        ),
+                      ),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _localSubtasks.length,
+                        itemBuilder: (context, index) {
+                          final sub = _localSubtasks[index];
+                          return ListTile(
+                            dense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8.0,
+                            ),
+                            leading: Icon(
+                              Icons.subdirectory_arrow_right_rounded,
+                              size: 16.0,
+                              color: theme.colorScheme.primary,
+                            ),
+                            title: Text(
+                              sub.title,
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.close_rounded, size: 16.0),
+                              color: theme.colorScheme.error,
+                              onPressed: () => _removeSubtask(index),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24.0),
+
                   // Action Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,

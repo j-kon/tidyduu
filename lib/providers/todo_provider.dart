@@ -49,7 +49,6 @@ final todoListProvider = StateNotifierProvider<TodoListNotifier, List<Todo>>((
   return TodoListNotifier(storageService, notificationService);
 });
 
-// StateNotifier managing the todo list
 class TodoListNotifier extends StateNotifier<List<Todo>> {
   final StorageService _storageService;
   final NotificationService _notificationService;
@@ -71,6 +70,9 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     TodoCategory category = TodoCategory.other,
     bool isToday = false,
     TodoReminder reminder = TodoReminder.none,
+    String notes = '',
+    List<Subtask> subtasks = const [],
+    TodoRepeat repeatOption = TodoRepeat.none,
   }) {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
@@ -80,11 +82,15 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       title: trimmedTitle,
       description: description.trim(),
       createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
       priority: priority,
       dueDate: dueDate,
       category: category,
       isToday: isToday,
       reminder: reminder,
+      notes: notes.trim(),
+      subtasks: subtasks,
+      repeatOption: repeatOption,
     );
     state = [...state, newTodo];
     _storageService.saveTodos(state);
@@ -92,10 +98,21 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
   }
 
   void toggleTodo(String id) {
+    Todo? originalTodo;
+    for (final todo in state) {
+      if (todo.id == id) {
+        originalTodo = todo;
+        break;
+      }
+    }
+    if (originalTodo == null) return;
+
+    final isNowCompleted = !originalTodo.isCompleted;
+
     state = [
       for (final todo in state)
         if (todo.id == id)
-          todo.copyWith(isCompleted: !todo.isCompleted)
+          todo.copyWith(isCompleted: isNowCompleted, updatedAt: DateTime.now())
         else
           todo,
     ];
@@ -105,6 +122,36 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     final updated = state.firstWhere((t) => t.id == id);
     if (updated.isCompleted) {
       _notificationService.cancelNotification(id);
+
+      // Spawn next occurrence if repeating and it has a due date
+      if (updated.repeatOption != TodoRepeat.none && updated.dueDate != null) {
+        final nextDueDate = _calculateNextDueDate(
+          updated.dueDate!,
+          updated.repeatOption,
+        );
+        final nextTodo = Todo(
+          id: const Uuid().v4(),
+          title: updated.title,
+          description: updated.description,
+          notes: updated.notes,
+          isCompleted: false,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+          priority: updated.priority,
+          dueDate: nextDueDate,
+          category: updated.category,
+          isToday: false,
+          reminder: updated.reminder,
+          repeatOption: updated.repeatOption,
+          subtasks: updated.subtasks
+              .map((s) => s.copyWith(id: const Uuid().v4(), isCompleted: false))
+              .toList(),
+        );
+
+        state = [...state, nextTodo];
+        _storageService.saveTodos(state);
+        _notificationService.scheduleNotification(nextTodo);
+      }
     } else {
       _notificationService.scheduleNotification(updated);
     }
@@ -113,7 +160,10 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
   void toggleToday(String id) {
     state = [
       for (final todo in state)
-        if (todo.id == id) todo.copyWith(isToday: !todo.isToday) else todo,
+        if (todo.id == id)
+          todo.copyWith(isToday: !todo.isToday, updatedAt: DateTime.now())
+        else
+          todo,
     ];
     _storageService.saveTodos(state);
   }
@@ -127,6 +177,9 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     TodoCategory? newCategory,
     bool? newIsToday,
     TodoReminder? newReminder,
+    String? newNotes,
+    List<Subtask>? newSubtasks,
+    TodoRepeat? newRepeatOption,
   }) {
     final trimmedTitle = newTitle.trim();
     if (trimmedTitle.isEmpty) return;
@@ -142,6 +195,10 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
             category: newCategory,
             isToday: newIsToday,
             reminder: newReminder,
+            notes: newNotes?.trim() ?? todo.notes,
+            subtasks: newSubtasks ?? todo.subtasks,
+            repeatOption: newRepeatOption ?? todo.repeatOption,
+            updatedAt: DateTime.now(),
           )
         else
           todo,
@@ -166,9 +223,116 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       _notificationService.scheduleNotification(todo);
     }
   }
+
+  // Interactive Subtasks Management
+  void toggleSubtask(String todoId, String subtaskId) {
+    state = [
+      for (final todo in state)
+        if (todo.id == todoId)
+          todo.copyWith(
+            updatedAt: DateTime.now(),
+            subtasks: [
+              for (final sub in todo.subtasks)
+                if (sub.id == subtaskId)
+                  sub.copyWith(isCompleted: !sub.isCompleted)
+                else
+                  sub,
+            ],
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
+  void addSubtask(String todoId, String title) {
+    final trimmed = title.trim();
+    if (trimmed.isEmpty) return;
+
+    state = [
+      for (final todo in state)
+        if (todo.id == todoId)
+          todo.copyWith(
+            updatedAt: DateTime.now(),
+            subtasks: [
+              ...todo.subtasks,
+              Subtask(id: const Uuid().v4(), title: trimmed),
+            ],
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
+  void editSubtask(String todoId, String subtaskId, String newTitle) {
+    final trimmed = newTitle.trim();
+    if (trimmed.isEmpty) return;
+
+    state = [
+      for (final todo in state)
+        if (todo.id == todoId)
+          todo.copyWith(
+            updatedAt: DateTime.now(),
+            subtasks: [
+              for (final sub in todo.subtasks)
+                if (sub.id == subtaskId) sub.copyWith(title: trimmed) else sub,
+            ],
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
+  void deleteSubtask(String todoId, String subtaskId) {
+    state = [
+      for (final todo in state)
+        if (todo.id == todoId)
+          todo.copyWith(
+            updatedAt: DateTime.now(),
+            subtasks: todo.subtasks
+                .where((sub) => sub.id != subtaskId)
+                .toList(),
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
+  // Recurrence Date Shift Helper
+  DateTime _calculateNextDueDate(DateTime currentDate, TodoRepeat repeat) {
+    switch (repeat) {
+      case TodoRepeat.daily:
+        return currentDate.add(const Duration(days: 1));
+      case TodoRepeat.weekly:
+        return currentDate.add(const Duration(days: 7));
+      case TodoRepeat.monthly:
+        int nextMonth = currentDate.month + 1;
+        int nextYear = currentDate.year;
+        if (nextMonth > 12) {
+          nextMonth = 1;
+          nextYear += 1;
+        }
+        final daysInMonth = DateTime(nextYear, nextMonth + 1, 0).day;
+        final nextDay = currentDate.day > daysInMonth
+            ? daysInMonth
+            : currentDate.day;
+        return DateTime(
+          nextYear,
+          nextMonth,
+          nextDay,
+          currentDate.hour,
+          currentDate.minute,
+          currentDate.second,
+        );
+      case TodoRepeat.none:
+        return currentDate;
+    }
+  }
 }
 
-// StateProvider for the active filter
 final todoFilterProvider = StateProvider<TodoFilter>((ref) => TodoFilter.all);
 
 // StateProvider for the active category filter (null means all categories)

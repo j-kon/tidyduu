@@ -41,7 +41,11 @@ TidyDuu uses a signature modern indigo-purple palette (`0xFF5E5CE6` light, `0xFF
 - **⚡ Priority Sorting**: Auto-arrange tasks by priority (*Low, Medium, High*).
 - **📅 Custom Grid Calendar**: Visualize task volume by date on a bespoke grid calendar built using pure Flutter, avoiding dependency conflicts.
 - **☀️ Today Focus**: A dedicated progress cockpit compiling tasks due today or marked for today, featuring a dynamic progress bar.
-- **🔔 Task Reminders & Notifications**: Configure local alerts (At due time, 10m, 1h, 1d before) integrated with `flutter_local_notifications` and exact scheduling.
+- **🔔 Task Reminders & Notifications**: Configure local alerts (At due time, 10m, 1h, 1d before) integrated with `flutter_local_notifications` and exact scheduling. Works with recurring tasks.
+- **✅ Subtasks Checklist**: Split complex tasks into optional checklists with live completion progress tracking (`2/5 completed`) and indicator bars.
+- **🔄 Recurring Tasks**: Automate habits with *Daily, Weekly*, or *Monthly* repeat options. Spawns next-occurrence tasks on completion.
+- **📝 Task Notes**: Add optional persistence notes to your tasks, marked by card indicators.
+- **👉 Swipe Actions**: Intuitive list gestures. Swipe right to toggle completion, and swipe left to delete with confirmation and instant "Undo".
 - **🔍 Text Search & Multi-Filters**: Filter and search through active/completed tasks by title instantly.
 - **🌓 Native Dark Theme**: Smooth OS-level light/dark theme transitions leveraging Material 3 color schemes.
 
@@ -55,9 +59,9 @@ TidyDuu employs a feature-first, layer-separated architecture to ensure modular 
 lib/
 ├── main.dart                 # App initialization, services bootstrapping, & scopes
 ├── models/
-│   └── todo.dart             # Pure data entities & rich enum extensions (UX resources)
+│   └── todo.dart             # Pure data entities, subtask models, & enum extensions
 ├── providers/
-│   └── todo_provider.dart    # Riverpod state notifiers, business rules, & UI filters
+│   └── todo_provider.dart    # Riverpod state notifiers, recurring dates, & UI filters
 ├── theme/
 │   └── app_theme.dart        # Central light & dark Material 3 theme configurations
 ├── services/
@@ -67,12 +71,13 @@ lib/
 │   ├── home_screen.dart      # Navigation Shell coordinates tabs
 │   ├── tasks_tab.dart        # Main dashboard list tab
 │   ├── today_tab.dart        # Today focus tab
-│   └── calendar_tab.dart     # Custom Grid Calendar tab
+│   ├── calendar_tab.dart     # Custom Grid Calendar tab
+│   └── task_details_screen.dart # Interactive subtask checklist & task details view
 └── widgets/
-    ├── add_edit_dialog.dart  # Form dialog for task CRUD operations
+    ├── add_edit_dialog.dart  # Form dialog with notes & subtask builder
     ├── empty_state.dart      # Universal custom state widgets
     ├── filter_chips.dart     # Reusable custom filter and category chips
-    └── todo_item_tile.dart   # Polished Modern Task Card (TalkBack/VoiceOver optimized)
+    └── todo_item_tile.dart   # Swipe actions, progress bars, & metadata indicators
 ```
 
 ---
@@ -141,8 +146,8 @@ dart format .
 
 - [ ] **Cross-Device Cloud Sync**: Back data with Firebase Firestore or Supabase database streams.
 - [ ] **Custom Tag Categories**: Let users create custom tags with custom colors and icons.
-- [ ] **Productivity Metrics**: Add line/bar graphs showing monthly progress histories.
-- [ ] **Sub-task Checklists**: Support splitting larger tasks into checklists.
+- [ ] **AI-Powered Task Prioritization**: Automatic smart ordering of tasks based on historic completions and velocity.
+- [ ] **Productivity Analytics & Metrics**: Staggered graphs showing weekly and monthly task completion rates.
 
 ---
 

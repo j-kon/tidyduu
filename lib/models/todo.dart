@@ -12,6 +12,51 @@ enum TodoReminder {
   oneDayBefore,
 }
 
+enum TodoRepeat { none, daily, weekly, monthly }
+
+extension TodoRepeatExtension on TodoRepeat {
+  String get label {
+    switch (this) {
+      case TodoRepeat.none:
+        return 'No repeat';
+      case TodoRepeat.daily:
+        return 'Daily';
+      case TodoRepeat.weekly:
+        return 'Weekly';
+      case TodoRepeat.monthly:
+        return 'Monthly';
+    }
+  }
+}
+
+class Subtask {
+  final String id;
+  final String title;
+  final bool isCompleted;
+
+  Subtask({required this.id, required this.title, this.isCompleted = false});
+
+  Subtask copyWith({String? id, String? title, bool? isCompleted}) {
+    return Subtask(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'title': title, 'isCompleted': isCompleted};
+  }
+
+  factory Subtask.fromJson(Map<String, dynamic> json) {
+    return Subtask(
+      id: json['id'] as String,
+      title: json['title'] as String,
+      isCompleted: json['isCompleted'] as bool,
+    );
+  }
+}
+
 extension TodoCategoryExtension on TodoCategory {
   String get label {
     switch (this) {
@@ -136,6 +181,10 @@ class Todo {
   final TodoCategory category;
   final bool isToday;
   final TodoReminder reminder;
+  final String notes;
+  final List<Subtask> subtasks;
+  final TodoRepeat repeatOption;
+  final DateTime updatedAt;
 
   Todo({
     required this.id,
@@ -148,7 +197,11 @@ class Todo {
     this.category = TodoCategory.other,
     this.isToday = false,
     this.reminder = TodoReminder.none,
-  });
+    this.notes = '',
+    this.subtasks = const [],
+    this.repeatOption = TodoRepeat.none,
+    DateTime? updatedAt,
+  }) : updatedAt = updatedAt ?? createdAt;
 
   Todo copyWith({
     String? id,
@@ -161,6 +214,10 @@ class Todo {
     TodoCategory? category,
     bool? isToday,
     TodoReminder? reminder,
+    String? notes,
+    List<Subtask>? subtasks,
+    TodoRepeat? repeatOption,
+    DateTime? updatedAt,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -173,6 +230,10 @@ class Todo {
       category: category ?? this.category,
       isToday: isToday ?? this.isToday,
       reminder: reminder ?? this.reminder,
+      notes: notes ?? this.notes,
+      subtasks: subtasks ?? this.subtasks,
+      repeatOption: repeatOption ?? this.repeatOption,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -188,6 +249,10 @@ class Todo {
       'category': category.name,
       'isToday': isToday,
       'reminder': reminder.name,
+      'notes': notes,
+      'subtasks': subtasks.map((e) => e.toJson()).toList(),
+      'repeatOption': repeatOption.name,
+      'updatedAt': updatedAt.toIso8601String(),
     };
   }
 
@@ -220,17 +285,45 @@ class Todo {
       orElse: () => TodoReminder.none,
     );
 
+    // New fields with backward compatibility fallbacks
+    final notes = (json['notes'] ?? '') as String;
+
+    final subtasksList = json['subtasks'] as List<dynamic>?;
+    final subtasks = subtasksList != null
+        ? subtasksList
+              .map((e) => Subtask.fromJson(e as Map<String, dynamic>))
+              .toList()
+        : const <Subtask>[];
+
+    final repeatOptionStr = json['repeatOption'] as String?;
+    final repeatOption = TodoRepeat.values.firstWhere(
+      (e) => e.name == repeatOptionStr,
+      orElse: () => TodoRepeat.none,
+    );
+
+    final createdAtStr = json['createdAt'] as String;
+    final createdAt = DateTime.parse(createdAtStr);
+
+    final updatedAtStr = json['updatedAt'] as String?;
+    final updatedAt = updatedAtStr != null
+        ? DateTime.parse(updatedAtStr)
+        : createdAt;
+
     return Todo(
       id: json['id'] as String,
       title: json['title'] as String,
       description: (json['description'] ?? '') as String,
       isCompleted: json['isCompleted'] as bool,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: createdAt,
       priority: priority,
       dueDate: dueDate,
       category: category,
       isToday: isToday,
       reminder: reminder,
+      notes: notes,
+      subtasks: subtasks,
+      repeatOption: repeatOption,
+      updatedAt: updatedAt,
     );
   }
 }
