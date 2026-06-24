@@ -16,7 +16,9 @@ class StorageService {
         return [];
       }
       final List<dynamic> decodedList = jsonDecode(todosJson) as List<dynamic>;
-      return decodedList.map((item) => Todo.fromJson(item as Map<String, dynamic>)).toList();
+      return decodedList
+          .map((item) => Todo.fromJson(item as Map<String, dynamic>))
+          .toList();
     } catch (e, stackTrace) {
       debugPrint('StorageService: Error loading todos: $e\n$stackTrace');
       return [];
@@ -25,7 +27,9 @@ class StorageService {
 
   Future<bool> saveTodos(List<Todo> todos) async {
     try {
-      final List<Map<String, dynamic>> jsonList = todos.map((todo) => todo.toJson()).toList();
+      final List<Map<String, dynamic>> jsonList = todos
+          .map((todo) => todo.toJson())
+          .toList();
       final String encoded = jsonEncode(jsonList);
       return await _prefs.setString(_todosKey, encoded);
     } catch (e, stackTrace) {

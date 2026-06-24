@@ -22,37 +22,51 @@ void main() {
       expect(todos, isEmpty);
     });
 
-    test('saveTodos saves serialized todo items to SharedPreferences', () async {
-      final todo = Todo(
-        id: '123',
-        title: 'Task title',
-        description: 'Task desc',
-        isCompleted: true,
-        createdAt: testDate,
-        priority: TodoPriority.high,
-        dueDate: testDate,
-      );
+    test(
+      'saveTodos saves serialized todo items to SharedPreferences',
+      () async {
+        final todo = Todo(
+          id: '123',
+          title: 'Task title',
+          description: 'Task desc',
+          isCompleted: true,
+          createdAt: testDate,
+          priority: TodoPriority.high,
+          dueDate: testDate,
+        );
 
-      final success = await storageService.saveTodos([todo]);
-      expect(success, isTrue);
+        final success = await storageService.saveTodos([todo]);
+        expect(success, isTrue);
 
-      // Verify what was written to SharedPreferences directly
-      final savedString = prefs.getString(todosKey);
-      expect(savedString, isNotNull);
+        // Verify what was written to SharedPreferences directly
+        final savedString = prefs.getString(todosKey);
+        expect(savedString, isNotNull);
 
-      final decoded = jsonDecode(savedString!) as List<dynamic>;
-      expect(decoded.length, 1);
-      expect(decoded.first['id'], '123');
-      expect(decoded.first['title'], 'Task title');
-      expect(decoded.first['isCompleted'], isTrue);
-      expect(decoded.first['priority'], 'high');
-      expect(decoded.first['dueDate'], testDate.toIso8601String());
-      expect(decoded.first['category'], 'other');
-    });
+        final decoded = jsonDecode(savedString!) as List<dynamic>;
+        expect(decoded.length, 1);
+        expect(decoded.first['id'], '123');
+        expect(decoded.first['title'], 'Task title');
+        expect(decoded.first['isCompleted'], isTrue);
+        expect(decoded.first['priority'], 'high');
+        expect(decoded.first['dueDate'], testDate.toIso8601String());
+        expect(decoded.first['category'], 'other');
+      },
+    );
 
     test('loadTodos deserializes saved tasks correctly', () async {
-      final todo1 = Todo(id: '1', title: 'Task 1', createdAt: testDate, priority: TodoPriority.low);
-      final todo2 = Todo(id: '2', title: 'Task 2', isCompleted: true, createdAt: testDate, dueDate: testDate);
+      final todo1 = Todo(
+        id: '1',
+        title: 'Task 1',
+        createdAt: testDate,
+        priority: TodoPriority.low,
+      );
+      final todo2 = Todo(
+        id: '2',
+        title: 'Task 2',
+        isCompleted: true,
+        createdAt: testDate,
+        dueDate: testDate,
+      );
 
       await storageService.saveTodos([todo1, todo2]);
 
@@ -72,38 +86,44 @@ void main() {
       expect(loaded[1].dueDate, testDate);
     });
 
-    test('loadTodos successfully parses legacy JSON without priority or dueDate fields', () async {
-      // Create legacy JSON directly (no priority or dueDate fields)
-      final legacyJson = [
-        {
-          'id': 'legacy-1',
-          'title': 'Legacy Task',
-          'description': 'Legacy Desc',
-          'isCompleted': false,
-          'createdAt': testDate.toIso8601String(),
-        }
-      ];
-      await prefs.setString(todosKey, jsonEncode(legacyJson));
+    test(
+      'loadTodos successfully parses legacy JSON without priority or dueDate fields',
+      () async {
+        // Create legacy JSON directly (no priority or dueDate fields)
+        final legacyJson = [
+          {
+            'id': 'legacy-1',
+            'title': 'Legacy Task',
+            'description': 'Legacy Desc',
+            'isCompleted': false,
+            'createdAt': testDate.toIso8601String(),
+          },
+        ];
+        await prefs.setString(todosKey, jsonEncode(legacyJson));
 
-      final loaded = storageService.loadTodos();
-      expect(loaded.length, 1);
-      expect(loaded.first.id, 'legacy-1');
-      expect(loaded.first.title, 'Legacy Task');
-      // Fallback defaults:
-      expect(loaded.first.priority, TodoPriority.medium);
-      expect(loaded.first.dueDate, isNull);
-      expect(loaded.first.category, TodoCategory.other);
-      expect(loaded.first.isToday, isFalse);
-      expect(loaded.first.reminder, TodoReminder.none);
-    });
+        final loaded = storageService.loadTodos();
+        expect(loaded.length, 1);
+        expect(loaded.first.id, 'legacy-1');
+        expect(loaded.first.title, 'Legacy Task');
+        // Fallback defaults:
+        expect(loaded.first.priority, TodoPriority.medium);
+        expect(loaded.first.dueDate, isNull);
+        expect(loaded.first.category, TodoCategory.other);
+        expect(loaded.first.isToday, isFalse);
+        expect(loaded.first.reminder, TodoReminder.none);
+      },
+    );
 
-    test('loadTodos returns empty list and handles exception if JSON is corrupted', () async {
-      // Write corrupted JSON directly to SharedPreferences
-      await prefs.setString(todosKey, '{invalid json');
+    test(
+      'loadTodos returns empty list and handles exception if JSON is corrupted',
+      () async {
+        // Write corrupted JSON directly to SharedPreferences
+        await prefs.setString(todosKey, '{invalid json');
 
-      final loaded = storageService.loadTodos();
-      // Should handle exception and return empty list cleanly
-      expect(loaded, isEmpty);
-    });
+        final loaded = storageService.loadTodos();
+        // Should handle exception and return empty list cleanly
+        expect(loaded, isEmpty);
+      },
+    );
   });
 }

@@ -15,32 +15,33 @@ class NotificationService {
 
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
-      requestAlertPermission: false,
-      requestBadgePermission: false,
-      requestSoundPermission: false,
-    );
+          requestAlertPermission: false,
+          requestBadgePermission: false,
+          requestSoundPermission: false,
+        );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
+          android: initializationSettingsAndroid,
+          iOS: initializationSettingsDarwin,
+        );
 
-    await _notificationsPlugin.initialize(
-      settings: initializationSettings,
-    );
+    await _notificationsPlugin.initialize(settings: initializationSettings);
   }
 
   Future<bool> requestPermissions() async {
     final androidImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin>();
+          AndroidFlutterLocalNotificationsPlugin
+        >();
 
-    final bool? androidGranted =
-        await androidImplementation?.requestNotificationsPermission();
+    final bool? androidGranted = await androidImplementation
+        ?.requestNotificationsPermission();
 
     final iOSImplementation = _notificationsPlugin
         .resolvePlatformSpecificImplementation<
-            IOSFlutterLocalNotificationsPlugin>();
+          IOSFlutterLocalNotificationsPlugin
+        >();
     final bool? iOSGranted = await iOSImplementation?.requestPermissions(
       alert: true,
       badge: true,
@@ -67,13 +68,14 @@ class NotificationService {
 
     final tzScheduleTime = tz.TZDateTime.from(scheduleTime, tz.local);
 
-    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
-      'tidyduu_reminders',
-      'Task Reminders',
-      channelDescription: 'Notifications for TidyDuu task reminders',
-      importance: Importance.max,
-      priority: Priority.high,
-    );
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'tidyduu_reminders',
+          'Task Reminders',
+          channelDescription: 'Notifications for TidyDuu task reminders',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
 
     const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
       presentAlert: true,
@@ -89,7 +91,9 @@ class NotificationService {
     await _notificationsPlugin.zonedSchedule(
       id: _getNotificationId(todo.id),
       title: 'Task Reminder: ${todo.title}',
-      body: todo.description.isNotEmpty ? todo.description : 'Your task is starting soon.',
+      body: todo.description.isNotEmpty
+          ? todo.description
+          : 'Your task is starting soon.',
       scheduledDate: tzScheduleTime,
       notificationDetails: platformDetails,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

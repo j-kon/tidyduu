@@ -44,9 +44,7 @@ void main() {
     fakeNotificationService = FakeNotificationService();
   });
 
-  ProviderContainer createContainer({
-    List<Override> overrides = const [],
-  }) {
+  ProviderContainer createContainer({List<Override> overrides = const []}) {
     final container = ProviderContainer(
       overrides: [
         notificationServiceProvider.overrideWithValue(fakeNotificationService),
@@ -59,20 +57,25 @@ void main() {
 
   group('Todo Provider Tests', () {
     test('Initial state is empty', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       expect(container.read(todoListProvider), isEmpty);
     });
 
     test('Add todo updates list state', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
-      notifier.addTodo('Buy milk', description: 'Organic preferred', priority: TodoPriority.low, dueDate: testDate);
+      notifier.addTodo(
+        'Buy milk',
+        description: 'Organic preferred',
+        priority: TodoPriority.low,
+        dueDate: testDate,
+      );
 
       final todos = container.read(todoListProvider);
       expect(todos.length, 1);
@@ -91,12 +94,12 @@ void main() {
     });
 
     test('Cannot add or edit todo with empty or whitespace title', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
-      
+
       // Attempt to add empty title
       notifier.addTodo('   ');
       expect(container.read(todoListProvider), isEmpty);
@@ -113,9 +116,9 @@ void main() {
     });
 
     test('Toggle todo changes completion status', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Read book');
@@ -129,22 +132,26 @@ void main() {
     });
 
     test('Edit todo updates title, description, priority and due date', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
-      notifier.addTodo('Old title', description: 'Old desc', priority: TodoPriority.medium);
+      notifier.addTodo(
+        'Old title',
+        description: 'Old desc',
+        priority: TodoPriority.medium,
+      );
       final todoId = container.read(todoListProvider).first.id;
 
       notifier.editTodo(
-        todoId, 
-        'New title', 
+        todoId,
+        'New title',
         newDescription: 'New desc',
         newPriority: TodoPriority.high,
         newDueDate: () => testDate,
       );
-      
+
       final todo = container.read(todoListProvider).first;
       expect(todo.title, 'New title');
       expect(todo.description, 'New desc');
@@ -153,9 +160,9 @@ void main() {
     });
 
     test('Delete todo removes it from state', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('To delete');
@@ -166,9 +173,9 @@ void main() {
     });
 
     test('Restore todo adds it back to state', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Undo Task');
@@ -185,9 +192,9 @@ void main() {
     });
 
     test('Filtering returns correct lists', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Task 1');
@@ -212,9 +219,9 @@ void main() {
     });
 
     test('Stats returns correct calculations', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Task 1');
@@ -230,46 +237,69 @@ void main() {
       expect(stats.completionPercentage, closeTo(1 / 3, 0.01));
     });
 
-    test('filteredTodoListProvider sorts correctly (completed bottom, then priority, then due date)', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+    test(
+      'filteredTodoListProvider sorts correctly (completed bottom, then priority, then due date)',
+      () {
+        final container = createContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
 
-      final notifier = container.read(todoListProvider.notifier);
-      final today = DateTime.now();
-      final tomorrow = today.add(const Duration(days: 1));
-      final nextWeek = today.add(const Duration(days: 7));
+        final notifier = container.read(todoListProvider.notifier);
+        final today = DateTime.now();
+        final tomorrow = today.add(const Duration(days: 1));
+        final nextWeek = today.add(const Duration(days: 7));
 
-      // Add a mix of tasks
-      notifier.addTodo('Medium Priority, tomorrow', priority: TodoPriority.medium, dueDate: tomorrow);
-      notifier.addTodo('High Priority, next week', priority: TodoPriority.high, dueDate: nextWeek);
-      notifier.addTodo('Low Priority, today', priority: TodoPriority.low, dueDate: today);
-      notifier.addTodo('High Priority, today', priority: TodoPriority.high, dueDate: today);
-      notifier.addTodo('Completed task', priority: TodoPriority.high, dueDate: today);
+        // Add a mix of tasks
+        notifier.addTodo(
+          'Medium Priority, tomorrow',
+          priority: TodoPriority.medium,
+          dueDate: tomorrow,
+        );
+        notifier.addTodo(
+          'High Priority, next week',
+          priority: TodoPriority.high,
+          dueDate: nextWeek,
+        );
+        notifier.addTodo(
+          'Low Priority, today',
+          priority: TodoPriority.low,
+          dueDate: today,
+        );
+        notifier.addTodo(
+          'High Priority, today',
+          priority: TodoPriority.high,
+          dueDate: today,
+        );
+        notifier.addTodo(
+          'Completed task',
+          priority: TodoPriority.high,
+          dueDate: today,
+        );
 
-      final todos = container.read(todoListProvider);
-      // Toggle the 5th task to completed
-      notifier.toggleTodo(todos[4].id);
+        final todos = container.read(todoListProvider);
+        // Toggle the 5th task to completed
+        notifier.toggleTodo(todos[4].id);
 
-      final sorted = container.read(filteredTodoListProvider);
+        final sorted = container.read(filteredTodoListProvider);
 
-      // We expect the sorting order:
-      // 1. High Priority, today (active, high priority, nearest due date)
-      // 2. High Priority, next week (active, high priority, farther due date)
-      // 3. Medium Priority, tomorrow (active, medium priority)
-      // 4. Low Priority, today (active, low priority)
-      // 5. Completed task (completed always stays at bottom)
-      expect(sorted[0].title, 'High Priority, today');
-      expect(sorted[1].title, 'High Priority, next week');
-      expect(sorted[2].title, 'Medium Priority, tomorrow');
-      expect(sorted[3].title, 'Low Priority, today');
-      expect(sorted[4].title, 'Completed task');
-    });
+        // We expect the sorting order:
+        // 1. High Priority, today (active, high priority, nearest due date)
+        // 2. High Priority, next week (active, high priority, farther due date)
+        // 3. Medium Priority, tomorrow (active, medium priority)
+        // 4. Low Priority, today (active, low priority)
+        // 5. Completed task (completed always stays at bottom)
+        expect(sorted[0].title, 'High Priority, today');
+        expect(sorted[1].title, 'High Priority, next week');
+        expect(sorted[2].title, 'Medium Priority, tomorrow');
+        expect(sorted[3].title, 'Low Priority, today');
+        expect(sorted[4].title, 'Completed task');
+      },
+    );
 
     test('Filtering by category returns correct lists', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Personal Task 1', category: TodoCategory.personal);
@@ -280,22 +310,24 @@ void main() {
       expect(container.read(filteredTodoListProvider).length, 3);
 
       // Filter by Work
-      container.read(todoCategoryFilterProvider.notifier).state = TodoCategory.work;
+      container.read(todoCategoryFilterProvider.notifier).state =
+          TodoCategory.work;
       final workList = container.read(filteredTodoListProvider);
       expect(workList.length, 1);
       expect(workList.first.title, 'Work Task 1');
 
       // Filter by Study
-      container.read(todoCategoryFilterProvider.notifier).state = TodoCategory.study;
+      container.read(todoCategoryFilterProvider.notifier).state =
+          TodoCategory.study;
       final studyList = container.read(filteredTodoListProvider);
       expect(studyList.length, 1);
       expect(studyList.first.title, 'Study Task 1');
     });
 
     test('Searching by title matches case-insensitive and filters lists', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Buy groceries');
@@ -316,34 +348,47 @@ void main() {
       expect(searchResult2.first.title, 'Groceries shopping');
     });
 
-    test('Searching, category filtering, and status filtering work in combination', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+    test(
+      'Searching, category filtering, and status filtering work in combination',
+      () {
+        final container = createContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
 
-      final notifier = container.read(todoListProvider.notifier);
-      notifier.addTodo('Buy milk', category: TodoCategory.errands); // active, errands
-      notifier.addTodo('Buy coffee', category: TodoCategory.errands); // active, errands
-      notifier.addTodo('Clean office', category: TodoCategory.work); // active, work
+        final notifier = container.read(todoListProvider.notifier);
+        notifier.addTodo(
+          'Buy milk',
+          category: TodoCategory.errands,
+        ); // active, errands
+        notifier.addTodo(
+          'Buy coffee',
+          category: TodoCategory.errands,
+        ); // active, errands
+        notifier.addTodo(
+          'Clean office',
+          category: TodoCategory.work,
+        ); // active, work
 
-      final todos = container.read(todoListProvider);
-      // Mark 'Buy milk' as completed
-      notifier.toggleTodo(todos[0].id); // completed, errands
+        final todos = container.read(todoListProvider);
+        // Mark 'Buy milk' as completed
+        notifier.toggleTodo(todos[0].id); // completed, errands
 
-      // Filter: Status=Active, Category=Errands, Search="Buy"
-      container.read(todoFilterProvider.notifier).state = TodoFilter.active;
-      container.read(todoCategoryFilterProvider.notifier).state = TodoCategory.errands;
-      container.read(todoSearchQueryProvider.notifier).state = 'Buy';
+        // Filter: Status=Active, Category=Errands, Search="Buy"
+        container.read(todoFilterProvider.notifier).state = TodoFilter.active;
+        container.read(todoCategoryFilterProvider.notifier).state =
+            TodoCategory.errands;
+        container.read(todoSearchQueryProvider.notifier).state = 'Buy';
 
-      final result = container.read(filteredTodoListProvider);
-      expect(result.length, 1);
-      expect(result.first.title, 'Buy coffee');
-    });
+        final result = container.read(filteredTodoListProvider);
+        expect(result.length, 1);
+        expect(result.first.title, 'Buy coffee');
+      },
+    );
 
     test('toggleToday changes isToday status', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo('Today Task');
@@ -358,75 +403,93 @@ void main() {
       expect(container.read(todoListProvider).first.isToday, isFalse);
     });
 
-    test('todayTodoListProvider filters and todayStatsProvider calculates correctly', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+    test(
+      'todayTodoListProvider filters and todayStatsProvider calculates correctly',
+      () {
+        final container = createContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
 
-      final notifier = container.read(todoListProvider.notifier);
-      final today = DateTime.now();
-      final todayStart = DateTime(today.year, today.month, today.day);
-      final tomorrow = todayStart.add(const Duration(days: 1));
+        final notifier = container.read(todoListProvider.notifier);
+        final today = DateTime.now();
+        final todayStart = DateTime(today.year, today.month, today.day);
+        final tomorrow = todayStart.add(const Duration(days: 1));
 
-      // Task 1: Due today, active
-      notifier.addTodo('Due Today Task', dueDate: todayStart);
-      // Task 2: Not due today, but isToday=true, active
-      notifier.addTodo('Starred Today Task', isToday: true, dueDate: tomorrow);
-      // Task 3: Due today, completed
-      notifier.addTodo('Due Today Completed Task', dueDate: todayStart);
-      // Task 4: Not due today, isToday=false, active
-      notifier.addTodo('Future Task', dueDate: tomorrow);
+        // Task 1: Due today, active
+        notifier.addTodo('Due Today Task', dueDate: todayStart);
+        // Task 2: Not due today, but isToday=true, active
+        notifier.addTodo(
+          'Starred Today Task',
+          isToday: true,
+          dueDate: tomorrow,
+        );
+        // Task 3: Due today, completed
+        notifier.addTodo('Due Today Completed Task', dueDate: todayStart);
+        // Task 4: Not due today, isToday=false, active
+        notifier.addTodo('Future Task', dueDate: tomorrow);
 
-      final todos = container.read(todoListProvider);
-      // Toggle Task 3 to completed
-      final task3Id = todos.firstWhere((t) => t.title == 'Due Today Completed Task').id;
-      notifier.toggleTodo(task3Id);
+        final todos = container.read(todoListProvider);
+        // Toggle Task 3 to completed
+        final task3Id = todos
+            .firstWhere((t) => t.title == 'Due Today Completed Task')
+            .id;
+        notifier.toggleTodo(task3Id);
 
-      // Verify todayTodoListProvider has 3 items (Task 1, 2, 3)
-      final todayList = container.read(todayTodoListProvider);
-      expect(todayList.length, 3);
-      expect(todayList.any((t) => t.title == 'Due Today Task'), isTrue);
-      expect(todayList.any((t) => t.title == 'Starred Today Task'), isTrue);
-      expect(todayList.any((t) => t.title == 'Due Today Completed Task'), isTrue);
-      expect(todayList.any((t) => t.title == 'Future Task'), isFalse);
+        // Verify todayTodoListProvider has 3 items (Task 1, 2, 3)
+        final todayList = container.read(todayTodoListProvider);
+        expect(todayList.length, 3);
+        expect(todayList.any((t) => t.title == 'Due Today Task'), isTrue);
+        expect(todayList.any((t) => t.title == 'Starred Today Task'), isTrue);
+        expect(
+          todayList.any((t) => t.title == 'Due Today Completed Task'),
+          isTrue,
+        );
+        expect(todayList.any((t) => t.title == 'Future Task'), isFalse);
 
-      // Verify stats
-      final stats = container.read(todayStatsProvider);
-      expect(stats.totalCount, 3);
-      expect(stats.completedCount, 1);
-      expect(stats.activeCount, 2);
-    });
+        // Verify stats
+        final stats = container.read(todayStatsProvider);
+        expect(stats.totalCount, 3);
+        expect(stats.completedCount, 1);
+        expect(stats.activeCount, 2);
+      },
+    );
 
-    test('calendarTodoListProvider filters correctly based on calendarSelectedDateProvider', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+    test(
+      'calendarTodoListProvider filters correctly based on calendarSelectedDateProvider',
+      () {
+        final container = createContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
 
-      final notifier = container.read(todoListProvider.notifier);
-      final today = DateTime.now();
-      final todayStart = DateTime(today.year, today.month, today.day);
-      final tomorrow = todayStart.add(const Duration(days: 1));
+        final notifier = container.read(todoListProvider.notifier);
+        final today = DateTime.now();
+        final todayStart = DateTime(today.year, today.month, today.day);
+        final tomorrow = todayStart.add(const Duration(days: 1));
 
-      notifier.addTodo('Today Task 1', dueDate: todayStart);
-      notifier.addTodo('Today Task 2', dueDate: todayStart);
-      notifier.addTodo('Tomorrow Task', dueDate: tomorrow);
+        notifier.addTodo('Today Task 1', dueDate: todayStart);
+        notifier.addTodo('Today Task 2', dueDate: todayStart);
+        notifier.addTodo('Tomorrow Task', dueDate: tomorrow);
 
-      // By default calendarSelectedDateProvider is today
-      final calendarListToday = container.read(calendarTodoListProvider);
-      expect(calendarListToday.length, 2);
-      expect(calendarListToday.any((t) => t.title == 'Tomorrow Task'), isFalse);
+        // By default calendarSelectedDateProvider is today
+        final calendarListToday = container.read(calendarTodoListProvider);
+        expect(calendarListToday.length, 2);
+        expect(
+          calendarListToday.any((t) => t.title == 'Tomorrow Task'),
+          isFalse,
+        );
 
-      // Change calendarSelectedDateProvider to tomorrow
-      container.read(calendarSelectedDateProvider.notifier).state = tomorrow;
-      final calendarListTomorrow = container.read(calendarTodoListProvider);
-      expect(calendarListTomorrow.length, 1);
-      expect(calendarListTomorrow.first.title, 'Tomorrow Task');
-    });
+        // Change calendarSelectedDateProvider to tomorrow
+        container.read(calendarSelectedDateProvider.notifier).state = tomorrow;
+        final calendarListTomorrow = container.read(calendarTodoListProvider);
+        expect(calendarListTomorrow.length, 1);
+        expect(calendarListTomorrow.first.title, 'Tomorrow Task');
+      },
+    );
 
     test('addTodo schedules a notification if a reminder is set', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo(
@@ -436,40 +499,52 @@ void main() {
       );
 
       expect(fakeNotificationService.scheduledTodos.length, 1);
-      expect(fakeNotificationService.scheduledTodos.first.title, 'Reminder Task');
-      expect(fakeNotificationService.scheduledTodos.first.reminder, TodoReminder.oneHourBefore);
-    });
-
-    test('toggleTodo cancels notification when completed, and schedules when active', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
-
-      final notifier = container.read(todoListProvider.notifier);
-      notifier.addTodo(
-        'Completable Task',
-        dueDate: testDate,
-        reminder: TodoReminder.atDueTime,
+      expect(
+        fakeNotificationService.scheduledTodos.first.title,
+        'Reminder Task',
       );
-
-      final todoId = container.read(todoListProvider).first.id;
-      fakeNotificationService.scheduledTodos.clear();
-
-      // Complete the task -> Should cancel notification
-      notifier.toggleTodo(todoId);
-      expect(fakeNotificationService.cancelledTodoIds.length, 1); // 1 from toggle
-      expect(fakeNotificationService.cancelledTodoIds.last, todoId);
-
-      // Mark task as active -> Should reschedule notification
-      notifier.toggleTodo(todoId);
-      expect(fakeNotificationService.scheduledTodos.length, 1);
-      expect(fakeNotificationService.scheduledTodos.first.id, todoId);
+      expect(
+        fakeNotificationService.scheduledTodos.first.reminder,
+        TodoReminder.oneHourBefore,
+      );
     });
+
+    test(
+      'toggleTodo cancels notification when completed, and schedules when active',
+      () {
+        final container = createContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
+
+        final notifier = container.read(todoListProvider.notifier);
+        notifier.addTodo(
+          'Completable Task',
+          dueDate: testDate,
+          reminder: TodoReminder.atDueTime,
+        );
+
+        final todoId = container.read(todoListProvider).first.id;
+        fakeNotificationService.scheduledTodos.clear();
+
+        // Complete the task -> Should cancel notification
+        notifier.toggleTodo(todoId);
+        expect(
+          fakeNotificationService.cancelledTodoIds.length,
+          1,
+        ); // 1 from toggle
+        expect(fakeNotificationService.cancelledTodoIds.last, todoId);
+
+        // Mark task as active -> Should reschedule notification
+        notifier.toggleTodo(todoId);
+        expect(fakeNotificationService.scheduledTodos.length, 1);
+        expect(fakeNotificationService.scheduledTodos.first.id, todoId);
+      },
+    );
 
     test('editTodo updates notification schedule', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo(
@@ -488,14 +563,20 @@ void main() {
       );
 
       expect(fakeNotificationService.scheduledTodos.length, 1);
-      expect(fakeNotificationService.scheduledTodos.first.title, 'Updated Task title');
-      expect(fakeNotificationService.scheduledTodos.first.reminder, TodoReminder.tenMinutesBefore);
+      expect(
+        fakeNotificationService.scheduledTodos.first.title,
+        'Updated Task title',
+      );
+      expect(
+        fakeNotificationService.scheduledTodos.first.reminder,
+        TodoReminder.tenMinutesBefore,
+      );
     });
 
     test('deleteTodo cancels notification', () {
-      final container = createContainer(overrides: [
-        sharedPreferencesProvider.overrideWithValue(prefs),
-      ]);
+      final container = createContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
 
       final notifier = container.read(todoListProvider.notifier);
       notifier.addTodo(

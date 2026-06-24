@@ -6,11 +6,7 @@ import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 // Enum for filtering task lists
-enum TodoFilter {
-  all,
-  active,
-  completed,
-}
+enum TodoFilter { all, active, completed }
 
 // Model for task statistics
 class TodoStats {
@@ -23,7 +19,9 @@ class TodoStats {
     required this.totalCount,
     required this.activeCount,
     required this.completedCount,
-  }) : completionPercentage = totalCount == 0 ? 0.0 : completedCount / totalCount;
+  }) : completionPercentage = totalCount == 0
+           ? 0.0
+           : completedCount / totalCount;
 }
 
 // Provider for SharedPreferences instance (overridden in main.dart)
@@ -43,7 +41,9 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
 });
 
 // StateNotifierProvider for the todo list
-final todoListProvider = StateNotifierProvider<TodoListNotifier, List<Todo>>((ref) {
+final todoListProvider = StateNotifierProvider<TodoListNotifier, List<Todo>>((
+  ref,
+) {
   final storageService = ref.watch(storageServiceProvider);
   final notificationService = ref.watch(notificationServiceProvider);
   return TodoListNotifier(storageService, notificationService);
@@ -54,7 +54,8 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
   final StorageService _storageService;
   final NotificationService _notificationService;
 
-  TodoListNotifier(this._storageService, this._notificationService) : super([]) {
+  TodoListNotifier(this._storageService, this._notificationService)
+    : super([]) {
     _loadTodos();
   }
 
@@ -96,7 +97,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
         if (todo.id == id)
           todo.copyWith(isCompleted: !todo.isCompleted)
         else
-          todo
+          todo,
     ];
     _storageService.saveTodos(state);
 
@@ -112,10 +113,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
   void toggleToday(String id) {
     state = [
       for (final todo in state)
-        if (todo.id == id)
-          todo.copyWith(isToday: !todo.isToday)
-        else
-          todo
+        if (todo.id == id) todo.copyWith(isToday: !todo.isToday) else todo,
     ];
     _storageService.saveTodos(state);
   }
@@ -146,7 +144,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
             reminder: newReminder,
           )
         else
-          todo
+          todo,
     ];
     _storageService.saveTodos(state);
 
@@ -203,12 +201,16 @@ final filteredTodoListProvider = Provider<List<Todo>>((ref) {
 
   // 2. Category Filter
   if (categoryFilter != null) {
-    filtered = filtered.where((todo) => todo.category == categoryFilter).toList();
+    filtered = filtered
+        .where((todo) => todo.category == categoryFilter)
+        .toList();
   }
 
   // 3. Search Query Filter (by title, case-insensitive)
   if (searchQuery.isNotEmpty) {
-    filtered = filtered.where((todo) => todo.title.toLowerCase().contains(searchQuery)).toList();
+    filtered = filtered
+        .where((todo) => todo.title.toLowerCase().contains(searchQuery))
+        .toList();
   }
 
   // Sort tasks:
@@ -251,11 +253,7 @@ final todoStatsProvider = Provider<TodoStats>((ref) {
   );
 });
 
-enum AppTab {
-  tasks,
-  today,
-  calendar,
-}
+enum AppTab { tasks, today, calendar }
 
 // Navigation Tab Provider
 final appTabProvider = StateProvider<AppTab>((ref) => AppTab.tasks);

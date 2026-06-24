@@ -33,11 +33,7 @@ void main() {
     });
 
     test('Instantiation defaults correctly', () {
-      final todo = Todo(
-        id: '123',
-        title: 'Task Title',
-        createdAt: testDate,
-      );
+      final todo = Todo(id: '123', title: 'Task Title', createdAt: testDate);
 
       expect(todo.isCompleted, isFalse);
       expect(todo.description, '');
@@ -146,23 +142,26 @@ void main() {
       expect(todo.reminder, TodoReminder.oneHourBefore);
     });
 
-    test('fromJson parses legacy JSON safely defaulting category and isToday', () {
-      // Legacy JSON from early app versions without category or isToday field
-      final json = {
-        'id': '123',
-        'title': 'Task Title',
-        'description': 'Task Desc',
-        'isCompleted': true,
-        'createdAt': testDate.toIso8601String(),
-      };
+    test(
+      'fromJson parses legacy JSON safely defaulting category and isToday',
+      () {
+        // Legacy JSON from early app versions without category or isToday field
+        final json = {
+          'id': '123',
+          'title': 'Task Title',
+          'description': 'Task Desc',
+          'isCompleted': true,
+          'createdAt': testDate.toIso8601String(),
+        };
 
-      final todo = Todo.fromJson(json);
+        final todo = Todo.fromJson(json);
 
-      expect(todo.id, '123');
-      expect(todo.title, 'Task Title');
-      expect(todo.category, TodoCategory.other); // Defaulted fallback
-      expect(todo.isToday, isFalse); // Defaulted fallback
-      expect(todo.reminder, TodoReminder.none); // Defaulted fallback
-    });
+        expect(todo.id, '123');
+        expect(todo.title, 'Task Title');
+        expect(todo.category, TodoCategory.other); // Defaulted fallback
+        expect(todo.isToday, isFalse); // Defaulted fallback
+        expect(todo.reminder, TodoReminder.none); // Defaulted fallback
+      },
+    );
   });
 }

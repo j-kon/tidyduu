@@ -1,16 +1,8 @@
-enum TodoPriority {
-  low,
-  medium,
-  high,
-}
+import 'package:flutter/material.dart';
 
-enum TodoCategory {
-  personal,
-  work,
-  study,
-  errands,
-  other,
-}
+enum TodoPriority { low, medium, high }
+
+enum TodoCategory { personal, work, study, errands, other }
 
 enum TodoReminder {
   none,
@@ -18,6 +10,119 @@ enum TodoReminder {
   tenMinutesBefore,
   oneHourBefore,
   oneDayBefore,
+}
+
+extension TodoCategoryExtension on TodoCategory {
+  String get label {
+    switch (this) {
+      case TodoCategory.personal:
+        return 'Personal';
+      case TodoCategory.work:
+        return 'Work';
+      case TodoCategory.study:
+        return 'Study';
+      case TodoCategory.errands:
+        return 'Errands';
+      case TodoCategory.other:
+        return 'Other';
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case TodoCategory.personal:
+        return Icons.person_rounded;
+      case TodoCategory.work:
+        return Icons.work_rounded;
+      case TodoCategory.study:
+        return Icons.menu_book_rounded;
+      case TodoCategory.errands:
+        return Icons.shopping_bag_rounded;
+      case TodoCategory.other:
+        return Icons.category_rounded;
+    }
+  }
+}
+
+extension TodoPriorityExtension on TodoPriority {
+  String get label {
+    switch (this) {
+      case TodoPriority.low:
+        return 'Low';
+      case TodoPriority.medium:
+        return 'Medium';
+      case TodoPriority.high:
+        return 'High';
+    }
+  }
+
+  Color color(BuildContext context) {
+    final theme = Theme.of(context);
+    switch (this) {
+      case TodoPriority.high:
+        return theme.colorScheme.error;
+      case TodoPriority.medium:
+        return theme.colorScheme.tertiary;
+      case TodoPriority.low:
+        return theme.colorScheme.secondary;
+    }
+  }
+
+  Color containerColor(BuildContext context) {
+    final theme = Theme.of(context);
+    switch (this) {
+      case TodoPriority.high:
+        return theme.colorScheme.errorContainer;
+      case TodoPriority.medium:
+        return theme.colorScheme.tertiaryContainer;
+      case TodoPriority.low:
+        return theme.colorScheme.secondaryContainer;
+    }
+  }
+
+  Color onContainerColor(BuildContext context) {
+    final theme = Theme.of(context);
+    switch (this) {
+      case TodoPriority.high:
+        return theme.colorScheme.onErrorContainer;
+      case TodoPriority.medium:
+        return theme.colorScheme.onTertiaryContainer;
+      case TodoPriority.low:
+        return theme.colorScheme.onSecondaryContainer;
+    }
+  }
+}
+
+extension TodoReminderExtension on TodoReminder {
+  String get label {
+    switch (this) {
+      case TodoReminder.none:
+        return 'No reminder';
+      case TodoReminder.atDueTime:
+        return 'At due time';
+      case TodoReminder.tenMinutesBefore:
+        return '10 minutes before';
+      case TodoReminder.oneHourBefore:
+        return '1 hour before';
+      case TodoReminder.oneDayBefore:
+        return '1 day before';
+    }
+  }
+
+  String get shortLabel {
+    switch (this) {
+      case TodoReminder.none:
+        return '';
+      case TodoReminder.atDueTime:
+        return 'At due time';
+      case TodoReminder.tenMinutesBefore:
+        return '10m before';
+      case TodoReminder.oneHourBefore:
+        return '1h before';
+      case TodoReminder.oneDayBefore:
+        return '1d before';
+    }
+  }
 }
 
 class Todo {

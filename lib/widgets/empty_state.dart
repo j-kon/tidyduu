@@ -4,10 +4,7 @@ import '../providers/todo_provider.dart';
 class EmptyState extends StatelessWidget {
   final TodoFilter filter;
 
-  const EmptyState({
-    super.key,
-    required this.filter,
-  });
+  const EmptyState({super.key, required this.filter});
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +46,7 @@ class EmptyState extends StatelessWidget {
                 color: theme.colorScheme.primaryContainer.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 64.0,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 64.0, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 24.0),
             Text(

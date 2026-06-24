@@ -7,10 +7,7 @@ import 'add_edit_dialog.dart';
 class TodoItemTile extends ConsumerWidget {
   final Todo todo;
 
-  const TodoItemTile({
-    super.key,
-    required this.todo,
-  });
+  const TodoItemTile({super.key, required this.todo});
 
   String _formatDateTime(DateTime dt) {
     final now = DateTime.now();
@@ -28,52 +25,49 @@ class TodoItemTile extends ConsumerWidget {
     } else if (taskDate == yesterday) {
       return 'Yesterday at $timeStr';
     } else {
-      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
       return '${months[dt.month - 1]} ${dt.day} at $timeStr';
     }
   }
 
   Widget _buildPriorityBadge(BuildContext context) {
     final theme = Theme.of(context);
-    String label;
-    Color bgColor;
-    Color textColor;
+    final priority = todo.priority;
 
-    switch (todo.priority) {
-      case TodoPriority.high:
-        label = 'High';
-        bgColor = theme.colorScheme.errorContainer;
-        textColor = theme.colorScheme.onErrorContainer;
-        break;
-      case TodoPriority.medium:
-        label = 'Medium';
-        bgColor = theme.colorScheme.tertiaryContainer;
-        textColor = theme.colorScheme.onTertiaryContainer;
-        break;
-      case TodoPriority.low:
-      default:
-        label = 'Low';
-        bgColor = theme.colorScheme.secondaryContainer;
-        textColor = theme.colorScheme.onSecondaryContainer;
-        break;
-    }
+    Color bgColor = todo.isCompleted
+        ? theme.colorScheme.surfaceVariant.withOpacity(0.5)
+        : priority.containerColor(context);
+    Color textColor = todo.isCompleted
+        ? theme.colorScheme.onSurfaceVariant.withOpacity(0.4)
+        : priority.onContainerColor(context);
 
-    if (todo.isCompleted) {
-      bgColor = theme.colorScheme.surfaceVariant.withOpacity(0.5);
-      textColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.4);
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Text(
-        label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: textColor,
+    return Semantics(
+      label: 'Priority: ${priority.label}',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Text(
+          priority.label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
         ),
       ),
     );
@@ -91,106 +85,66 @@ class TodoItemTile extends ConsumerWidget {
       textColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.4);
     }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-          color: textColor.withOpacity(0.3),
-          width: 1.0,
+    return Semantics(
+      label: 'Starred for today',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8.0),
+          border: Border.all(color: textColor.withOpacity(0.3), width: 1.0),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.wb_sunny_rounded,
-            size: 12.0,
-            color: textColor,
-          ),
-          const SizedBox(width: 4.0),
-          Text(
-            'Today',
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: textColor,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.wb_sunny_rounded, size: 12.0, color: textColor),
+            const SizedBox(width: 4.0),
+            Text(
+              'Today',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildCategoryBadge(BuildContext context) {
     final theme = Theme.of(context);
-    String label;
-    IconData icon;
-    Color bgColor;
-    Color textColor;
+    final category = todo.category;
 
-    switch (todo.category) {
-      case TodoCategory.personal:
-        label = 'Personal';
-        icon = Icons.person_rounded;
-        bgColor = theme.colorScheme.primaryContainer;
-        textColor = theme.colorScheme.onPrimaryContainer;
-        break;
-      case TodoCategory.work:
-        label = 'Work';
-        icon = Icons.work_rounded;
-        bgColor = theme.colorScheme.secondaryContainer;
-        textColor = theme.colorScheme.onSecondaryContainer;
-        break;
-      case TodoCategory.study:
-        label = 'Study';
-        icon = Icons.menu_book_rounded;
-        bgColor = theme.colorScheme.tertiaryContainer;
-        textColor = theme.colorScheme.onTertiaryContainer;
-        break;
-      case TodoCategory.errands:
-        label = 'Errands';
-        icon = Icons.shopping_bag_rounded;
-        bgColor = Colors.teal.shade100;
-        textColor = Colors.teal.shade900;
-        break;
-      case TodoCategory.other:
-      default:
-        label = 'Other';
-        icon = Icons.category_rounded;
-        bgColor = theme.colorScheme.surfaceVariant;
-        textColor = theme.colorScheme.onSurfaceVariant;
-        break;
-    }
+    Color bgColor = todo.isCompleted
+        ? theme.colorScheme.surfaceVariant.withOpacity(0.5)
+        : theme.colorScheme.primaryContainer.withOpacity(0.8);
+    Color textColor = todo.isCompleted
+        ? theme.colorScheme.onSurfaceVariant.withOpacity(0.4)
+        : theme.colorScheme.onPrimaryContainer;
 
-    if (todo.isCompleted) {
-      bgColor = theme.colorScheme.surfaceVariant.withOpacity(0.5);
-      textColor = theme.colorScheme.onSurfaceVariant.withOpacity(0.4);
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 12.0,
-            color: textColor,
-          ),
-          const SizedBox(width: 4.0),
-          Text(
-            label,
-            style: theme.textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: textColor,
+    return Semantics(
+      label: 'Category: ${category.label}',
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(8.0),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(category.icon, size: 12.0, color: textColor),
+            const SizedBox(width: 4.0),
+            Text(
+              category.label,
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -202,11 +156,29 @@ class TodoItemTile extends ConsumerWidget {
     // Calculate if overdue
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final taskDue = DateTime(todo.dueDate!.year, todo.dueDate!.month, todo.dueDate!.day);
+    final taskDue = DateTime(
+      todo.dueDate!.year,
+      todo.dueDate!.month,
+      todo.dueDate!.day,
+    );
     final isOverdue = !todo.isCompleted && taskDue.isBefore(today);
 
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    final dateStr = 'Due: ${months[todo.dueDate!.month - 1]} ${todo.dueDate!.day}';
+    final months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    final dateStr =
+        'Due: ${months[todo.dueDate!.month - 1]} ${todo.dueDate!.day}';
 
     Color textColor;
     IconData icon;
@@ -221,23 +193,22 @@ class TodoItemTile extends ConsumerWidget {
       icon = Icons.calendar_today_rounded;
     }
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 12.0,
-          color: textColor,
-        ),
-        const SizedBox(width: 4.0),
-        Text(
-          dateStr,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: textColor,
-            fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+    return Semantics(
+      label: isOverdue ? 'Overdue: $dateStr' : dateStr,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.0, color: textColor),
+          const SizedBox(width: 4.0),
+          Text(
+            dateStr,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: textColor,
+              fontWeight: isOverdue ? FontWeight.bold : FontWeight.normal,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -249,38 +220,24 @@ class TodoItemTile extends ConsumerWidget {
         ? theme.colorScheme.onSurfaceVariant.withOpacity(0.4)
         : theme.colorScheme.onSurfaceVariant;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          Icons.notifications_active_rounded,
-          size: 12.0,
-          color: textColor,
-        ),
-        const SizedBox(width: 4.0),
-        Text(
-          _getReminderLabel(todo.reminder),
-          style: theme.textTheme.bodySmall?.copyWith(
+    return Semantics(
+      label: 'Reminder: ${todo.reminder.label}',
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.notifications_active_rounded,
+            size: 12.0,
             color: textColor,
           ),
-        ),
-      ],
+          const SizedBox(width: 4.0),
+          Text(
+            todo.reminder.shortLabel,
+            style: theme.textTheme.bodySmall?.copyWith(color: textColor),
+          ),
+        ],
+      ),
     );
-  }
-
-  String _getReminderLabel(TodoReminder reminder) {
-    switch (reminder) {
-      case TodoReminder.none:
-        return 'No reminder';
-      case TodoReminder.atDueTime:
-        return 'At due time';
-      case TodoReminder.tenMinutesBefore:
-        return '10m before';
-      case TodoReminder.oneHourBefore:
-        return '1h before';
-      case TodoReminder.oneDayBefore:
-        return '1d before';
-    }
   }
 
   @override
@@ -313,33 +270,39 @@ class TodoItemTile extends ConsumerWidget {
           child: Row(
             children: [
               // Circular checkbox toggle
-              GestureDetector(
-                onTap: () {
-                  ref.read(todoListProvider.notifier).toggleTodo(todo.id);
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 24.0,
-                  height: 24.0,
-                  decoration: BoxDecoration(
-                    color: isCompleted
-                        ? theme.colorScheme.primary
-                        : Colors.transparent,
-                    border: Border.all(
+              Semantics(
+                label: isCompleted ? 'Mark active' : 'Mark completed',
+                value: isCompleted ? 'checked' : 'unchecked',
+                child: GestureDetector(
+                  onTap: () {
+                    ref.read(todoListProvider.notifier).toggleTodo(todo.id);
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 24.0,
+                    height: 24.0,
+                    decoration: BoxDecoration(
                       color: isCompleted
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
-                      width: 2.0,
+                          : Colors.transparent,
+                      border: Border.all(
+                        color: isCompleted
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant.withOpacity(
+                                0.8,
+                              ),
+                        width: 2.0,
+                      ),
+                      shape: BoxShape.circle,
                     ),
-                    shape: BoxShape.circle,
+                    child: isCompleted
+                        ? const Icon(
+                            Icons.check,
+                            size: 14.0,
+                            color: Colors.white,
+                          )
+                        : null,
                   ),
-                  child: isCompleted
-                      ? const Icon(
-                          Icons.check,
-                          size: 14.0,
-                          color: Colors.white,
-                        )
-                      : null,
                 ),
               ),
               const SizedBox(width: 16.0),
@@ -377,16 +340,20 @@ class TodoItemTile extends ConsumerWidget {
                               Icons.access_time_rounded,
                               size: 12.0,
                               color: isCompleted
-                                  ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
-                                  : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                                  ? theme.colorScheme.onSurfaceVariant
+                                        .withOpacity(0.3)
+                                  : theme.colorScheme.onSurfaceVariant
+                                        .withOpacity(0.6),
                             ),
                             const SizedBox(width: 4.0),
                             Text(
                               _formatDateTime(todo.createdAt),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: isCompleted
-                                    ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
-                                    : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                                    ? theme.colorScheme.onSurfaceVariant
+                                          .withOpacity(0.3)
+                                    : theme.colorScheme.onSurfaceVariant
+                                          .withOpacity(0.6),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -406,7 +373,9 @@ class TodoItemTile extends ConsumerWidget {
                         todo.description,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: isCompleted
-                              ? theme.colorScheme.onSurfaceVariant.withOpacity(0.4)
+                              ? theme.colorScheme.onSurfaceVariant.withOpacity(
+                                  0.4,
+                                )
                               : theme.colorScheme.onSurfaceVariant,
                           decoration: isCompleted
                               ? TextDecoration.lineThrough
@@ -421,10 +390,14 @@ class TodoItemTile extends ConsumerWidget {
               // Action Buttons
               IconButton(
                 icon: Icon(
-                  todo.isToday ? Icons.wb_sunny_rounded : Icons.wb_sunny_outlined,
+                  todo.isToday
+                      ? Icons.wb_sunny_rounded
+                      : Icons.wb_sunny_outlined,
                   size: 20.0,
                 ),
-                color: todo.isToday ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
+                color: todo.isToday
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
                 tooltip: todo.isToday ? 'Remove from Today' : 'Add to Today',
                 onPressed: () {
                   ref.read(todoListProvider.notifier).toggleToday(todo.id);
@@ -457,7 +430,9 @@ class TodoItemTile extends ConsumerWidget {
                         size: 28.0,
                       ),
                       title: const Text('Delete Task?'),
-                      content: Text('Are you sure you want to delete "${todo.title}"? This cannot be undone.'),
+                      content: Text(
+                        'Are you sure you want to delete "${todo.title}"? This cannot be undone.',
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24.0),
                       ),
@@ -465,11 +440,6 @@ class TodoItemTile extends ConsumerWidget {
                       actions: [
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context, false),
-                          style: OutlinedButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                          ),
                           child: const Text('Cancel'),
                         ),
                         FilledButton(
@@ -477,9 +447,6 @@ class TodoItemTile extends ConsumerWidget {
                           style: FilledButton.styleFrom(
                             backgroundColor: theme.colorScheme.error,
                             foregroundColor: theme.colorScheme.onError,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
                           ),
                           child: const Text('Delete'),
                         ),
