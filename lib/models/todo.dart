@@ -12,6 +12,14 @@ enum TodoCategory {
   other,
 }
 
+enum TodoReminder {
+  none,
+  atDueTime,
+  tenMinutesBefore,
+  oneHourBefore,
+  oneDayBefore,
+}
+
 class Todo {
   final String id;
   final String title;
@@ -22,6 +30,7 @@ class Todo {
   final DateTime? dueDate;
   final TodoCategory category;
   final bool isToday;
+  final TodoReminder reminder;
 
   Todo({
     required this.id,
@@ -33,6 +42,7 @@ class Todo {
     this.dueDate,
     this.category = TodoCategory.other,
     this.isToday = false,
+    this.reminder = TodoReminder.none,
   });
 
   Todo copyWith({
@@ -45,6 +55,7 @@ class Todo {
     DateTime? Function()? dueDate,
     TodoCategory? category,
     bool? isToday,
+    TodoReminder? reminder,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -56,6 +67,7 @@ class Todo {
       dueDate: dueDate != null ? dueDate() : this.dueDate,
       category: category ?? this.category,
       isToday: isToday ?? this.isToday,
+      reminder: reminder ?? this.reminder,
     );
   }
 
@@ -70,6 +82,7 @@ class Todo {
       'dueDate': dueDate?.toIso8601String(),
       'category': category.name,
       'isToday': isToday,
+      'reminder': reminder.name,
     };
   }
 
@@ -95,6 +108,13 @@ class Todo {
     // Parse isToday safely with default fallback for backward compatibility
     final isToday = (json['isToday'] ?? false) as bool;
 
+    // Parse reminder safely with default fallback for backward compatibility
+    final reminderStr = json['reminder'] as String?;
+    final reminder = TodoReminder.values.firstWhere(
+      (e) => e.name == reminderStr,
+      orElse: () => TodoReminder.none,
+    );
+
     return Todo(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -105,6 +125,7 @@ class Todo {
       dueDate: dueDate,
       category: category,
       isToday: isToday,
+      reminder: reminder,
     );
   }
 }

@@ -241,6 +241,48 @@ class TodoItemTile extends ConsumerWidget {
     );
   }
 
+  Widget? _buildReminderBadge(BuildContext context) {
+    if (todo.dueDate == null || todo.reminder == TodoReminder.none) return null;
+    final theme = Theme.of(context);
+
+    final textColor = todo.isCompleted
+        ? theme.colorScheme.onSurfaceVariant.withOpacity(0.4)
+        : theme.colorScheme.onSurfaceVariant;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          Icons.notifications_active_rounded,
+          size: 12.0,
+          color: textColor,
+        ),
+        const SizedBox(width: 4.0),
+        Text(
+          _getReminderLabel(todo.reminder),
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: textColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _getReminderLabel(TodoReminder reminder) {
+    switch (reminder) {
+      case TodoReminder.none:
+        return 'No reminder';
+      case TodoReminder.atDueTime:
+        return 'At due time';
+      case TodoReminder.tenMinutesBefore:
+        return '10m before';
+      case TodoReminder.oneHourBefore:
+        return '1h before';
+      case TodoReminder.oneDayBefore:
+        return '1d before';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -352,6 +394,9 @@ class TodoItemTile extends ConsumerWidget {
                         ),
                         if (todo.dueDate != null) ...[
                           _buildDueDateBadge(context)!,
+                          if (todo.reminder != TodoReminder.none) ...[
+                            _buildReminderBadge(context)!,
+                          ],
                         ],
                       ],
                     ),

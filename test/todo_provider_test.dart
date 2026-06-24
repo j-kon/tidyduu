@@ -3,23 +3,56 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tidyduu/models/todo.dart';
 import 'package:tidyduu/providers/todo_provider.dart';
+import 'package:tidyduu/services/notification_service.dart';
 import 'package:tidyduu/services/storage_service.dart';
+
+class FakeNotificationService implements NotificationService {
+  final List<Todo> scheduledTodos = [];
+  final List<String> cancelledTodoIds = [];
+  bool permissionsRequested = false;
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<bool> requestPermissions() async {
+    permissionsRequested = true;
+    return true;
+  }
+
+  @override
+  Future<void> scheduleNotification(Todo todo) async {
+    scheduledTodos.add(todo);
+  }
+
+  @override
+  Future<void> cancelNotification(String todoId) async {
+    cancelledTodoIds.add(todoId);
+  }
+}
 
 void main() {
   late SharedPreferences prefs;
   late StorageService storageService;
+  late FakeNotificationService fakeNotificationService;
   final testDate = DateTime(2026, 6, 24, 12, 0);
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
     storageService = StorageService(prefs);
+    fakeNotificationService = FakeNotificationService();
   });
 
   ProviderContainer createContainer({
     List<Override> overrides = const [],
   }) {
-    final container = ProviderContainer(overrides: overrides);
+    final container = ProviderContainer(
+      overrides: [
+        notificationServiceProvider.overrideWithValue(fakeNotificationService),
+        ...overrides,
+      ],
+    );
     addTearDown(container.dispose);
     return container;
   }
@@ -388,6 +421,95 @@ void main() {
       final calendarListTomorrow = container.read(calendarTodoListProvider);
       expect(calendarListTomorrow.length, 1);
       expect(calendarListTomorrow.first.title, 'Tomorrow Task');
+    });
+
+    test('addTodo schedules a notification if a reminder is set', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo(
+        'Reminder Task',
+        dueDate: testDate,
+        reminder: TodoReminder.oneHourBefore,
+      );
+
+      expect(fakeNotificationService.scheduledTodos.length, 1);
+      expect(fakeNotificationService.scheduledTodos.first.title, 'Reminder Task');
+      expect(fakeNotificationService.scheduledTodos.first.reminder, TodoReminder.oneHourBefore);
+    });
+
+    test('toggleTodo cancels notification when completed, and schedules when active', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo(
+        'Completable Task',
+        dueDate: testDate,
+        reminder: TodoReminder.atDueTime,
+      );
+
+      final todoId = container.read(todoListProvider).first.id;
+      fakeNotificationService.scheduledTodos.clear();
+
+      // Complete the task -> Should cancel notification
+      notifier.toggleTodo(todoId);
+      expect(fakeNotificationService.cancelledTodoIds.length, 1); // 1 from toggle
+      expect(fakeNotificationService.cancelledTodoIds.last, todoId);
+
+      // Mark task as active -> Should reschedule notification
+      notifier.toggleTodo(todoId);
+      expect(fakeNotificationService.scheduledTodos.length, 1);
+      expect(fakeNotificationService.scheduledTodos.first.id, todoId);
+    });
+
+    test('editTodo updates notification schedule', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo(
+        'Task to edit',
+        dueDate: testDate,
+        reminder: TodoReminder.atDueTime,
+      );
+
+      final todoId = container.read(todoListProvider).first.id;
+      fakeNotificationService.scheduledTodos.clear();
+
+      notifier.editTodo(
+        todoId,
+        'Updated Task title',
+        newReminder: TodoReminder.tenMinutesBefore,
+      );
+
+      expect(fakeNotificationService.scheduledTodos.length, 1);
+      expect(fakeNotificationService.scheduledTodos.first.title, 'Updated Task title');
+      expect(fakeNotificationService.scheduledTodos.first.reminder, TodoReminder.tenMinutesBefore);
+    });
+
+    test('deleteTodo cancels notification', () {
+      final container = createContainer(overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ]);
+
+      final notifier = container.read(todoListProvider.notifier);
+      notifier.addTodo(
+        'Task to delete',
+        dueDate: testDate,
+        reminder: TodoReminder.atDueTime,
+      );
+
+      final todoId = container.read(todoListProvider).first.id;
+      fakeNotificationService.cancelledTodoIds.clear();
+
+      notifier.deleteTodo(todoId);
+      expect(fakeNotificationService.cancelledTodoIds.length, 1);
+      expect(fakeNotificationService.cancelledTodoIds.first, todoId);
     });
   });
 }

@@ -5,20 +5,49 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tidyduu/main.dart';
 import 'package:tidyduu/models/todo.dart';
 import 'package:tidyduu/providers/todo_provider.dart';
+import 'package:tidyduu/services/notification_service.dart';
 import 'package:tidyduu/widgets/todo_item_tile.dart';
+
+class FakeNotificationService implements NotificationService {
+  final List<Todo> scheduledTodos = [];
+  final List<String> cancelledTodoIds = [];
+  bool permissionsRequested = false;
+
+  @override
+  Future<void> init() async {}
+
+  @override
+  Future<bool> requestPermissions() async {
+    permissionsRequested = true;
+    return true;
+  }
+
+  @override
+  Future<void> scheduleNotification(Todo todo) async {
+    scheduledTodos.add(todo);
+  }
+
+  @override
+  Future<void> cancelNotification(String todoId) async {
+    cancelledTodoIds.add(todoId);
+  }
+}
 
 void main() {
   late SharedPreferences prefs;
+  late FakeNotificationService fakeNotificationService;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
+    fakeNotificationService = FakeNotificationService();
   });
 
   Widget createWidgetUnderTest() {
     return ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        notificationServiceProvider.overrideWithValue(fakeNotificationService),
       ],
       child: const TidyDuuApp(),
     );
@@ -318,5 +347,52 @@ void main() {
     await tester.ensureVisible(cancelBtn);
     await tester.tap(cancelBtn);
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('A task can be created with a due date and a reminder, displaying the reminder badge', (WidgetTester tester) async {
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // Open add task bottom sheet
+    await tester.tap(find.byType(FloatingActionButton));
+    await tester.pumpAndSettle();
+
+    // Enter title
+    await tester.enterText(find.widgetWithText(TextFormField, 'Task Title'), 'Reminder Task Title');
+    await tester.pumpAndSettle();
+
+    // Tap due date button
+    final dueDateButton = find.widgetWithText(OutlinedButton, 'No due date set');
+    await tester.ensureVisible(dueDateButton);
+    await tester.tap(dueDateButton);
+    await tester.pumpAndSettle();
+
+    // Select today's date in picker (tapping OK in the date picker dialog)
+    final okBtn = find.text('OK');
+    expect(okBtn, findsOneWidget);
+    await tester.tap(okBtn);
+    await tester.pumpAndSettle();
+
+    // Verify reminder dropdown appears because a due date is now selected
+    final reminderDropdown = find.byType(DropdownButtonFormField<TodoReminder>);
+    expect(reminderDropdown, findsOneWidget);
+    await tester.ensureVisible(reminderDropdown);
+    await tester.tap(reminderDropdown);
+    await tester.pumpAndSettle();
+
+    // Select '1 hour before'
+    final reminderOption = find.text('1 hour before').last;
+    await tester.tap(reminderOption);
+    await tester.pumpAndSettle();
+
+    // Tap Create button
+    final createBtn = find.text('Create');
+    await tester.ensureVisible(createBtn);
+    await tester.tap(createBtn);
+    await tester.pumpAndSettle();
+
+    // Verify task is added and shows the "1h before" reminder badge on card
+    expect(find.text('Reminder Task Title'), findsOneWidget);
+    expect(find.text('1h before'), findsOneWidget);
   });
 }

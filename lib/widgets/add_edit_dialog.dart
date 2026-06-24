@@ -23,6 +23,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   DateTime? _selectedDueDate;
   late TodoCategory _selectedCategory;
   late bool _selectedIsToday;
+  late TodoReminder _selectedReminder;
 
   @override
   void initState() {
@@ -31,6 +32,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     _descriptionController = TextEditingController(text: widget.todo?.description ?? '');
     _selectedPriority = widget.todo?.priority ?? TodoPriority.medium;
     _selectedCategory = widget.todo?.category ?? TodoCategory.other;
+    _selectedReminder = widget.todo?.reminder ?? TodoReminder.none;
 
     if (widget.todo == null) {
       final activeTab = ref.read(appTabProvider);
@@ -58,6 +60,24 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     super.dispose();
   }
 
+  Future<void> _checkAndRequestNotificationPermission(TodoReminder reminder) async {
+    if (reminder != TodoReminder.none) {
+      final notifier = ref.read(notificationServiceProvider);
+      final granted = await notifier.requestPermissions();
+      if (!granted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Notification permissions are required for reminders.'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   void _submit() {
     if (_formKey.currentState!.validate()) {
       final notifier = ref.read(todoListProvider.notifier);
@@ -69,6 +89,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           dueDate: _selectedDueDate,
           category: _selectedCategory,
           isToday: _selectedIsToday,
+          reminder: _selectedReminder,
         );
       } else {
         notifier.editTodo(
@@ -79,6 +100,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           newDueDate: () => _selectedDueDate,
           newCategory: _selectedCategory,
           newIsToday: _selectedIsToday,
+          newReminder: _selectedReminder,
         );
       }
       Navigator.of(context).pop();
@@ -305,12 +327,48 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                       onPressed: () {
                         setState(() {
                           _selectedDueDate = null;
+                          _selectedReminder = TodoReminder.none;
                         });
                       },
                     ),
                   ],
                 ],
               ),
+              if (_selectedDueDate != null) ...[
+                const SizedBox(height: 16.0),
+                Text(
+                  'Reminder',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 8.0),
+                DropdownButtonFormField<TodoReminder>(
+                  value: _selectedReminder,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.0),
+                    ),
+                    prefixIcon: const Icon(Icons.notifications_active_rounded),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  ),
+                  items: TodoReminder.values.map((reminder) {
+                    return DropdownMenuItem<TodoReminder>(
+                      value: reminder,
+                      child: Text(_getReminderLabel(reminder)),
+                    );
+                  }).toList(),
+                  onChanged: (value) async {
+                    if (value != null) {
+                      setState(() {
+                        _selectedReminder = value;
+                      });
+                      await _checkAndRequestNotificationPermission(value);
+                    }
+                  },
+                ),
+              ],
               const SizedBox(height: 16.0),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
@@ -405,6 +463,21 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
         return Icons.shopping_bag_rounded;
       case TodoCategory.other:
         return Icons.category_rounded;
+    }
+  }
+
+  String _getReminderLabel(TodoReminder reminder) {
+    switch (reminder) {
+      case TodoReminder.none:
+        return 'No reminder';
+      case TodoReminder.atDueTime:
+        return 'At due time';
+      case TodoReminder.tenMinutesBefore:
+        return '10 minutes before';
+      case TodoReminder.oneHourBefore:
+        return '1 hour before';
+      case TodoReminder.oneDayBefore:
+        return '1 day before';
     }
   }
 }

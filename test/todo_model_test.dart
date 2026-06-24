@@ -17,6 +17,7 @@ void main() {
         dueDate: dueTestDate,
         category: TodoCategory.work,
         isToday: true,
+        reminder: TodoReminder.oneHourBefore,
       );
 
       expect(todo.id, '123');
@@ -28,6 +29,7 @@ void main() {
       expect(todo.dueDate, dueTestDate);
       expect(todo.category, TodoCategory.work);
       expect(todo.isToday, isTrue);
+      expect(todo.reminder, TodoReminder.oneHourBefore);
     });
 
     test('Instantiation defaults correctly', () {
@@ -43,6 +45,7 @@ void main() {
       expect(todo.dueDate, isNull);
       expect(todo.category, TodoCategory.other);
       expect(todo.isToday, isFalse);
+      expect(todo.reminder, TodoReminder.none);
     });
 
     test('copyWith modifies specific fields while retaining others', () {
@@ -56,9 +59,10 @@ void main() {
         dueDate: dueTestDate,
         category: TodoCategory.personal,
         isToday: false,
+        reminder: TodoReminder.none,
       );
 
-      // Copy with priority, category, isToday change and clearing due date
+      // Copy with priority, category, isToday, reminder change and clearing due date
       final updated = original.copyWith(
         title: 'Updated Title',
         isCompleted: true,
@@ -66,6 +70,7 @@ void main() {
         dueDate: () => null, // Reset due date to null
         category: TodoCategory.study,
         isToday: true,
+        reminder: TodoReminder.tenMinutesBefore,
       );
 
       // Changed fields
@@ -75,6 +80,7 @@ void main() {
       expect(updated.dueDate, isNull);
       expect(updated.category, TodoCategory.study);
       expect(updated.isToday, isTrue);
+      expect(updated.reminder, TodoReminder.tenMinutesBefore);
 
       // Unchanged fields
       expect(updated.id, '123');
@@ -93,6 +99,7 @@ void main() {
         dueDate: dueTestDate,
         category: TodoCategory.errands,
         isToday: true,
+        reminder: TodoReminder.oneHourBefore,
       );
 
       final json = todo.toJson();
@@ -107,6 +114,7 @@ void main() {
         'dueDate': dueTestDate.toIso8601String(),
         'category': 'errands',
         'isToday': true,
+        'reminder': 'oneHourBefore',
       });
     });
 
@@ -121,6 +129,7 @@ void main() {
         'dueDate': dueTestDate.toIso8601String(),
         'category': 'personal',
         'isToday': true,
+        'reminder': 'oneHourBefore',
       };
 
       final todo = Todo.fromJson(json);
@@ -134,6 +143,7 @@ void main() {
       expect(todo.dueDate, dueTestDate);
       expect(todo.category, TodoCategory.personal);
       expect(todo.isToday, isTrue);
+      expect(todo.reminder, TodoReminder.oneHourBefore);
     });
 
     test('fromJson parses legacy JSON safely defaulting category and isToday', () {
@@ -152,6 +162,7 @@ void main() {
       expect(todo.title, 'Task Title');
       expect(todo.category, TodoCategory.other); // Defaulted fallback
       expect(todo.isToday, isFalse); // Defaulted fallback
+      expect(todo.reminder, TodoReminder.none); // Defaulted fallback
     });
   });
 }

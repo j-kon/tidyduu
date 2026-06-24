@@ -94,6 +94,7 @@ void main() {
       expect(loaded.first.dueDate, isNull);
       expect(loaded.first.category, TodoCategory.other);
       expect(loaded.first.isToday, isFalse);
+      expect(loaded.first.reminder, TodoReminder.none);
     });
 
     test('loadTodos returns empty list and handles exception if JSON is corrupted', () async {

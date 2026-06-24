@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/todo.dart';
+import '../services/notification_service.dart';
 import '../services/storage_service.dart';
 
 // Enum for filtering task lists
@@ -36,17 +37,24 @@ final storageServiceProvider = Provider<StorageService>((ref) {
   return StorageService(prefs);
 });
 
+// Provider for NotificationService
+final notificationServiceProvider = Provider<NotificationService>((ref) {
+  return NotificationService();
+});
+
 // StateNotifierProvider for the todo list
 final todoListProvider = StateNotifierProvider<TodoListNotifier, List<Todo>>((ref) {
   final storageService = ref.watch(storageServiceProvider);
-  return TodoListNotifier(storageService);
+  final notificationService = ref.watch(notificationServiceProvider);
+  return TodoListNotifier(storageService, notificationService);
 });
 
 // StateNotifier managing the todo list
 class TodoListNotifier extends StateNotifier<List<Todo>> {
   final StorageService _storageService;
+  final NotificationService _notificationService;
 
-  TodoListNotifier(this._storageService) : super([]) {
+  TodoListNotifier(this._storageService, this._notificationService) : super([]) {
     _loadTodos();
   }
 
@@ -61,6 +69,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     DateTime? dueDate,
     TodoCategory category = TodoCategory.other,
     bool isToday = false,
+    TodoReminder reminder = TodoReminder.none,
   }) {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
@@ -74,9 +83,11 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       dueDate: dueDate,
       category: category,
       isToday: isToday,
+      reminder: reminder,
     );
     state = [...state, newTodo];
     _storageService.saveTodos(state);
+    _notificationService.scheduleNotification(newTodo);
   }
 
   void toggleTodo(String id) {
@@ -88,6 +99,14 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
           todo
     ];
     _storageService.saveTodos(state);
+
+    // Cancel or reschedule notification
+    final updated = state.firstWhere((t) => t.id == id);
+    if (updated.isCompleted) {
+      _notificationService.cancelNotification(id);
+    } else {
+      _notificationService.scheduleNotification(updated);
+    }
   }
 
   void toggleToday(String id) {
@@ -109,6 +128,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     DateTime? Function()? newDueDate,
     TodoCategory? newCategory,
     bool? newIsToday,
+    TodoReminder? newReminder,
   }) {
     final trimmedTitle = newTitle.trim();
     if (trimmedTitle.isEmpty) return;
@@ -123,22 +143,29 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
             dueDate: newDueDate,
             category: newCategory,
             isToday: newIsToday,
+            reminder: newReminder,
           )
         else
           todo
     ];
     _storageService.saveTodos(state);
+
+    // Reschedule notification
+    final updated = state.firstWhere((t) => t.id == id);
+    _notificationService.scheduleNotification(updated);
   }
 
   void deleteTodo(String id) {
     state = state.where((todo) => todo.id != id).toList();
     _storageService.saveTodos(state);
+    _notificationService.cancelNotification(id);
   }
 
   void restoreTodo(Todo todo) {
     if (!state.any((t) => t.id == todo.id)) {
       state = [...state, todo];
       _storageService.saveTodos(state);
+      _notificationService.scheduleNotification(todo);
     }
   }
 }
