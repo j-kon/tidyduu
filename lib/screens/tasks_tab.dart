@@ -6,6 +6,7 @@ import '../providers/settings_provider.dart';
 import '../widgets/empty_state.dart';
 import '../widgets/filter_chips.dart';
 import '../widgets/todo_item_tile.dart';
+import '../services/smart_task_parser_service.dart';
 
 class TasksTab extends ConsumerStatefulWidget {
   const TasksTab({super.key});
@@ -339,20 +340,43 @@ class _QuickAddBarState extends ConsumerState<_QuickAddBar> {
   }
 
   void _submit() {
-    final title = _controller.text.trim();
-    if (title.isEmpty) return;
+    final rawText = _controller.text.trim();
+    if (rawText.isEmpty) return;
+
+    final parsed = SmartTaskParserService.parse(rawText);
+    if (parsed.title.isEmpty) return;
 
     final settings = ref.read(settingsProvider);
-    final activeCategory =
-        ref.read(todoCategoryFilterProvider) ?? TodoCategory.other;
+    final finalPriority = parsed.priority ?? settings.defaultPriority;
+
+    final activeCategoryFilter = ref.read(todoCategoryFilterProvider);
+    final finalCategory =
+        parsed.category ?? activeCategoryFilter ?? TodoCategory.other;
+
+    final finalRepeat = parsed.repeatOption ?? TodoRepeat.none;
+    final finalDueDate = parsed.dueDate;
+
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final isToday =
+        finalDueDate != null &&
+        DateTime(finalDueDate.year, finalDueDate.month, finalDueDate.day) ==
+            today;
+
+    final finalReminder = finalDueDate != null
+        ? settings.defaultReminder
+        : TodoReminder.none;
 
     ref
         .read(todoListProvider.notifier)
         .addTodo(
-          title,
-          priority: settings.defaultPriority,
-          reminder: settings.defaultReminder,
-          category: activeCategory,
+          parsed.title,
+          priority: finalPriority,
+          category: finalCategory,
+          dueDate: finalDueDate,
+          repeatOption: finalRepeat,
+          isToday: isToday,
+          reminder: finalReminder,
         );
 
     _controller.clear();
@@ -365,9 +389,83 @@ class _QuickAddBarState extends ConsumerState<_QuickAddBar> {
     );
   }
 
+  String _formatDateTime(DateTime date, TimeOfDay? time) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateOnly = DateTime(date.year, date.month, date.day);
+
+    String dateStr;
+    if (dateOnly == today) {
+      dateStr = 'Today';
+    } else if (dateOnly == tomorrow) {
+      dateStr = 'Tomorrow';
+    } else {
+      final weekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ];
+      dateStr =
+          '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}';
+    }
+
+    if (time != null) {
+      final hour = time.hour == 0 || time.hour == 12 ? 12 : time.hour % 12;
+      final minuteStr = time.minute.toString().padLeft(2, '0');
+      final amPm = time.hour >= 12 ? 'PM' : 'AM';
+      return '$dateStr at $hour:$minuteStr $amPm';
+    }
+    return dateStr;
+  }
+
+  Widget _buildPreviewChip(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(8.0),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12.0, color: color),
+          const SizedBox(width: 4.0),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: color,
+              fontSize: 11.0,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final rawText = _controller.text;
+    final parsed = SmartTaskParserService.parse(rawText);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
@@ -375,7 +473,7 @@ class _QuickAddBarState extends ConsumerState<_QuickAddBar> {
         horizontal: _isFocused ? 16.0 : 24.0,
         vertical: 8.0,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       decoration: BoxDecoration(
         color: _isFocused
             ? theme.colorScheme.primaryContainer.withOpacity(0.2)
@@ -397,46 +495,139 @@ class _QuickAddBarState extends ConsumerState<_QuickAddBar> {
               ]
             : null,
       ),
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Icon(
-            Icons.add_circle_outline_rounded,
-            color: _isFocused
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurfaceVariant,
-            size: 22.0,
-          ),
-          const SizedBox(width: 12.0),
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              focusNode: _focusNode,
-              onSubmitted: (_) => _submit(),
-              style: theme.textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: 'Quick add task...',
-                hintStyle: TextStyle(
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.7),
-                ),
-                border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
+          Row(
+            children: [
+              Icon(
+                Icons.add_circle_outline_rounded,
+                color: _isFocused
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+                size: 22.0,
               ),
-            ),
-          ),
-          if (_controller.text.isNotEmpty || _isFocused)
-            AnimatedScale(
-              scale: _isFocused ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 200),
-              child: IconButton(
-                icon: const Icon(Icons.arrow_upward_rounded),
-                onPressed: _submit,
-                color: theme.colorScheme.primary,
-                style: IconButton.styleFrom(
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  padding: const EdgeInsets.all(8),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focusNode,
+                  onSubmitted: (_) => _submit(),
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText:
+                        'Quick add task (e.g., Buy milk tomorrow high)...',
+                    hintStyle: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
+                        0.7,
+                      ),
+                      fontSize: 13.0,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14.0),
+                  ),
                 ),
               ),
+              if (_controller.text.isNotEmpty || _isFocused)
+                AnimatedScale(
+                  scale: _isFocused ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 200),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_upward_rounded),
+                    onPressed: _submit,
+                    color: theme.colorScheme.primary,
+                    style: IconButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      padding: const EdgeInsets.all(8),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          if (_isFocused && _controller.text.trim().isNotEmpty) ...[
+            Divider(
+              height: 1,
+              color: theme.colorScheme.outlineVariant.withOpacity(0.5),
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.auto_awesome_rounded,
+                        size: 14.0,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6.0),
+                      Text(
+                        'SMART PREVIEW',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6.0),
+                  Text(
+                    'Title: ${parsed.title.isEmpty ? "(Enter a title)" : parsed.title}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: parsed.title.isEmpty
+                          ? theme.colorScheme.onSurfaceVariant.withOpacity(0.5)
+                          : theme.colorScheme.onSurface,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 6.0),
+                  Wrap(
+                    spacing: 6.0,
+                    runSpacing: 6.0,
+                    children: [
+                      if (parsed.dueDate != null)
+                        _buildPreviewChip(
+                          context,
+                          icon: Icons.calendar_today_rounded,
+                          label: _formatDateTime(
+                            parsed.dueDate!,
+                            parsed.dueTime,
+                          ),
+                          color: theme.colorScheme.primary,
+                        ),
+                      if (parsed.priority != null)
+                        _buildPreviewChip(
+                          context,
+                          icon: Icons.flag_rounded,
+                          label: '${parsed.priority!.label} Priority',
+                          color: parsed.priority!.color(context),
+                        ),
+                      if (parsed.category != null)
+                        _buildPreviewChip(
+                          context,
+                          icon: parsed.category!.icon,
+                          label: parsed.category!.label,
+                          color: theme.colorScheme.secondary,
+                        ),
+                      if (parsed.repeatOption != null &&
+                          parsed.repeatOption != TodoRepeat.none)
+                        _buildPreviewChip(
+                          context,
+                          icon: Icons.replay_rounded,
+                          label: parsed.repeatOption!.label,
+                          color: theme.colorScheme.tertiary,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

@@ -49,7 +49,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify Quick Add hint is visible
-    expect(find.text('Quick add task...'), findsOneWidget);
+    expect(find.text('Quick add task (e.g., Buy milk tomorrow high)...'), findsOneWidget);
 
     // Enter text and submit
     await tester.enterText(find.byType(TextField).first, 'Quickly Added Task');

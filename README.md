@@ -54,7 +54,7 @@ By building this application, I practiced:
 *   **📅 Custom Grid Calendar**: A custom-drawn grid calendar mapping task densities directly to calendar dates without using third-party package dependencies.
 *   **🔔 Task Reminders**: Multi-option notifications (at due time, 10m, 1h, 1d before) powered by `flutter_local_notifications` that respect user timezones.
 *   **🔄 Recurring Tasks & Subtasks**: Repeat tasks daily, weekly, or monthly (with auto-spawning next occurrences) and manage subtask progress bars.
-*   **👉 Swipe Actions & Quick Add**: Swipe right to complete, swipe left to delete with a rapid "Undo" snackbar. Write shorthand tasks via the floating quick-add bar.
+*   **👉 Swipe Actions & Smart Quick Add**: Swipe right to complete, swipe left to delete with a rapid "Undo" snackbar. Create tasks using natural language-like input (e.g. `"Submit report Friday high work"`) locally without external APIs or backends, complete with a live UI preview of the parsed parameters.
 *   **🌓 Material 3 Personalization**: Smooth light/dark theme switching, default configurations, and persistent system settings.
 
 ---
@@ -89,7 +89,8 @@ lib/
 │   └── app_theme.dart        # Custom light and dark Material 3 color palettes
 ├── services/
 │   ├── storage_service.dart  # JSON serializer storage backend (SharedPreferences wrapper)
-│   └── notification_service.dart # Local timezone-aware exact alarm dispatcher
+│   ├── notification_service.dart # Local timezone-aware exact alarm dispatcher
+│   └── smart_task_parser_service.dart # Natural language parser extracting dates, priorities, categories, and repeats
 ├── screens/
 │   ├── home_screen.dart      # Primary navigation coordinator and tab shell
 │   ├── dashboard_tab.dart    # Dashboard card insights and statistics
@@ -172,25 +173,36 @@ Execute automated tests:
 flutter test
 ```
 
+## 📦 Releases & Compilation
+
+### Current Stable Version: `v0.1.0`
+You can download pre-compiled packages directly from the [GitHub Releases Page](https://github.com/j-kon/tidyduu/releases/tag/v0.1.0).
+
 ---
 
-## 📦 Generating Releases
+### How to Build From Source
 
-### Android
-Compile release APK:
+Before building the release, ensure that any assets and brand paths are properly resolved.
+
+#### 🤖 Android Build
+To build a standalone Android Package (APK) for local install:
 ```bash
 flutter build apk --release
 ```
-Compile release App Bundle (for Google Play Store):
+*Output path: `build/app/outputs/flutter-apk/app-release.apk`*
+
+To build an Android App Bundle (AAB) for Google Play Store upload:
 ```bash
 flutter build appbundle --release
 ```
+*Output path: `build/app/outputs/bundle/release/app-release.aab`*
 
-### iOS
-Compile release bundle for App Store Connect distribution:
+#### 🍎 iOS Build
+To compile the iOS app bundle (configure certificates in Xcode first):
 ```bash
 flutter build ios --release
 ```
+*Note: To publish to the Apple App Store, configure Xcode signing identities and complete the archiving process using Xcode.*
 
 ---
 
