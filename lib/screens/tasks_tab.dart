@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../models/todo.dart';
 import '../providers/todo_provider.dart';
 import '../providers/settings_provider.dart';
@@ -162,128 +163,152 @@ class _TasksTabState extends ConsumerState<TasksTab> {
                 ),
               ],
             ),
-          ),
+          ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0),
 
           // Search Bar Section
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 6.0,
-            ),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) =>
-                  ref.read(todoSearchQueryProvider.notifier).state = value,
-              style: theme.textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: 'Search tasks...',
-                prefixIcon: Icon(
-                  Icons.search_rounded,
-                  color: theme.colorScheme.primary,
-                  size: 20.0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 6.0,
                 ),
-                suffixIcon: ref.watch(todoSearchQueryProvider).isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear_rounded, size: 20.0),
-                        onPressed: () {
-                          _searchController.clear();
-                          ref.read(todoSearchQueryProvider.notifier).state = '';
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: theme.colorScheme.surfaceVariant.withOpacity(0.3),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16.0),
-                  borderSide: BorderSide.none,
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) =>
+                      ref.read(todoSearchQueryProvider.notifier).state = value,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Search tasks...',
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      color: theme.colorScheme.primary,
+                      size: 20.0,
+                    ),
+                    suffixIcon: ref.watch(todoSearchQueryProvider).isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 20.0),
+                            onPressed: () {
+                              _searchController.clear();
+                              ref.read(todoSearchQueryProvider.notifier).state =
+                                  '';
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: theme.colorScheme.surfaceVariant.withOpacity(
+                      0.3,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 0.0,
+                      horizontal: 16.0,
+                    ),
+                  ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0.0,
-                  horizontal: 16.0,
-                ),
-              ),
-            ),
-          ),
+              )
+              .animate(delay: 50.ms)
+              .fadeIn(duration: 350.ms)
+              .slideY(begin: 0.05, end: 0),
 
           // Category Chips Section
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 6.0,
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  CategoryFilterChipWidget(
-                    label: 'All Categories',
-                    icon: Icons.grid_view_rounded,
-                    isSelected: ref.watch(todoCategoryFilterProvider) == null,
-                    onTap: () =>
-                        ref.read(todoCategoryFilterProvider.notifier).state =
-                            null,
-                  ),
-                  ...TodoCategory.values.map((category) {
-                    return Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: CategoryFilterChipWidget(
-                        label: category.label,
-                        icon: category.icon,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 6.0,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      CategoryFilterChipWidget(
+                        label: 'All Categories',
+                        icon: Icons.grid_view_rounded,
                         isSelected:
-                            ref.watch(todoCategoryFilterProvider) == category,
+                            ref.watch(todoCategoryFilterProvider) == null,
                         onTap: () =>
                             ref
                                     .read(todoCategoryFilterProvider.notifier)
                                     .state =
-                                category,
+                                null,
                       ),
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
+                      ...TodoCategory.values.map((category) {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: CategoryFilterChipWidget(
+                            label: category.label,
+                            icon: category.icon,
+                            isSelected:
+                                ref.watch(todoCategoryFilterProvider) ==
+                                category,
+                            onTap: () =>
+                                ref
+                                        .read(
+                                          todoCategoryFilterProvider.notifier,
+                                        )
+                                        .state =
+                                    category,
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              )
+              .animate(delay: 100.ms)
+              .fadeIn(duration: 350.ms)
+              .slideY(begin: 0.05, end: 0),
 
           // Filter Chips Section
           Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 8.0,
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  FilterChipWidget(
-                    label: 'All',
-                    isSelected: activeFilter == TodoFilter.all,
-                    count: stats.totalCount,
-                    onTap: () => ref.read(todoFilterProvider.notifier).state =
-                        TodoFilter.all,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 8.0,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      FilterChipWidget(
+                        label: 'All',
+                        isSelected: activeFilter == TodoFilter.all,
+                        count: stats.totalCount,
+                        onTap: () =>
+                            ref.read(todoFilterProvider.notifier).state =
+                                TodoFilter.all,
+                      ),
+                      const SizedBox(width: 8.0),
+                      FilterChipWidget(
+                        label: 'Active',
+                        isSelected: activeFilter == TodoFilter.active,
+                        count: stats.activeCount,
+                        onTap: () =>
+                            ref.read(todoFilterProvider.notifier).state =
+                                TodoFilter.active,
+                      ),
+                      const SizedBox(width: 8.0),
+                      FilterChipWidget(
+                        label: 'Completed',
+                        isSelected: activeFilter == TodoFilter.completed,
+                        count: stats.completedCount,
+                        onTap: () =>
+                            ref.read(todoFilterProvider.notifier).state =
+                                TodoFilter.completed,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8.0),
-                  FilterChipWidget(
-                    label: 'Active',
-                    isSelected: activeFilter == TodoFilter.active,
-                    count: stats.activeCount,
-                    onTap: () => ref.read(todoFilterProvider.notifier).state =
-                        TodoFilter.active,
-                  ),
-                  const SizedBox(width: 8.0),
-                  FilterChipWidget(
-                    label: 'Completed',
-                    isSelected: activeFilter == TodoFilter.completed,
-                    count: stats.completedCount,
-                    onTap: () => ref.read(todoFilterProvider.notifier).state =
-                        TodoFilter.completed,
-                  ),
-                ],
-              ),
-            ),
-          ),
+                ),
+              )
+              .animate(delay: 150.ms)
+              .fadeIn(duration: 350.ms)
+              .slideY(begin: 0.05, end: 0),
 
           // Quick Add Section
-          const _QuickAddBar(),
+          const _QuickAddBar()
+              .animate(delay: 200.ms)
+              .fadeIn(duration: 350.ms)
+              .slideY(begin: 0.05, end: 0),
 
           // Tasks List / Empty State
           filteredTodos.isEmpty
@@ -291,7 +316,7 @@ class _TasksTabState extends ConsumerState<TasksTab> {
                   padding: const EdgeInsets.only(top: 32.0),
                   child: EmptyState(filter: activeFilter),
                 )
-              : ListView.builder(
+              : ReorderableListView.builder(
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 96.0),
@@ -299,6 +324,16 @@ class _TasksTabState extends ConsumerState<TasksTab> {
                   itemBuilder: (context, index) {
                     final todo = filteredTodos[index];
                     return TodoItemTile(key: ValueKey(todo.id), todo: todo);
+                  },
+                  onReorder: (oldIndex, newIndex) {
+                    ref
+                        .read(todoCustomOrderProvider.notifier)
+                        .reorder(
+                          filteredTodos,
+                          ref.read(todoListProvider),
+                          oldIndex,
+                          newIndex,
+                        );
                   },
                 ),
         ],

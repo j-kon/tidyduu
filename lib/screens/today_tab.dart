@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import '../providers/todo_provider.dart';
 import '../widgets/todo_item_tile.dart';
 
@@ -134,22 +135,29 @@ class TodayTab extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
+          ).animate().fadeIn(duration: 350.ms).slideY(begin: 0.05, end: 0),
         ),
 
         // Today Tasks List
         Expanded(
           child: todayTodos.isEmpty
               ? _buildTodayEmptyState(context)
-              : ListView.builder(
+              : ReorderableListView.builder(
                   padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 96.0),
                   itemCount: todayTodos.length,
                   itemBuilder: (context, index) {
                     final todo = todayTodos[index];
-                    return TodoItemTile(
-                      key: ValueKey('today_${todo.id}'),
-                      todo: todo,
-                    );
+                    return TodoItemTile(key: ValueKey(todo.id), todo: todo);
+                  },
+                  onReorder: (oldIndex, newIndex) {
+                    ref
+                        .read(todoCustomOrderProvider.notifier)
+                        .reorder(
+                          todayTodos,
+                          ref.read(todoListProvider),
+                          oldIndex,
+                          newIndex,
+                        );
                   },
                 ),
         ),

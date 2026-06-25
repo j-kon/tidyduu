@@ -24,26 +24,29 @@ class DashboardTab extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Welcome to TidyDuu',
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      'Productivity Insights',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Welcome to TidyDuu',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4.0),
+                        Text(
+                          'Productivity Insights',
+                          style: theme.textTheme.headlineMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                      ],
+                    )
+                    .animate()
+                    .fadeIn(duration: 300.ms)
+                    .slideX(begin: -0.05, end: 0),
                 IconButton(
                   icon: const Icon(Icons.settings_outlined),
                   tooltip: 'Settings',
@@ -135,61 +138,76 @@ class DashboardTab extends ConsumerWidget {
 
             // Stats grid layout
             GridView.count(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 16.0,
-                  mainAxisSpacing: 16.0,
-                  childAspectRatio: 1.3,
-                  children: [
-                    _buildStatCard(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 16.0,
+              mainAxisSpacing: 16.0,
+              childAspectRatio: 1.3,
+              children: [
+                _buildStatCard(
                       context,
                       title: 'Total Tasks',
                       value: stats.totalTasks,
                       icon: Icons.playlist_add_check_rounded,
                       color: theme.colorScheme.primary,
-                    ),
-                    _buildStatCard(
+                    )
+                    .animate(delay: 50.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.1, end: 0),
+                _buildStatCard(
                       context,
                       title: 'Completed',
                       value: stats.completedTasks,
                       icon: Icons.check_circle_outline_rounded,
                       color: Colors.green,
-                    ),
-                    _buildStatCard(
+                    )
+                    .animate(delay: 100.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.1, end: 0),
+                _buildStatCard(
                       context,
                       title: 'Active',
                       value: stats.activeTasks,
                       icon: Icons.pending_actions_rounded,
                       color: Colors.orange,
-                    ),
-                    _buildStatCard(
+                    )
+                    .animate(delay: 150.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.1, end: 0),
+                _buildStatCard(
                       context,
                       title: 'Overdue',
                       value: stats.overdueTasks,
                       icon: Icons.error_outline_rounded,
                       color: theme.colorScheme.error,
                       highlight: stats.overdueTasks > 0,
-                    ),
-                    _buildStatCard(
+                    )
+                    .animate(delay: 200.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.1, end: 0),
+                _buildStatCard(
                       context,
                       title: 'Due Today',
                       value: stats.todayTasks,
                       icon: Icons.today_rounded,
                       color: theme.colorScheme.secondary,
-                    ),
-                    _buildStatCard(
+                    )
+                    .animate(delay: 250.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.1, end: 0),
+                _buildStatCard(
                       context,
                       title: 'High Priority',
                       value: stats.highPriorityTasks,
                       icon: Icons.priority_high_rounded,
                       color: Colors.redAccent,
-                    ),
-                  ],
-                )
-                .animate(delay: 150.ms)
-                .fadeIn(duration: 350.ms)
-                .slideY(begin: 0.05, end: 0),
+                    )
+                    .animate(delay: 300.ms)
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: 0.1, end: 0),
+              ],
+            ),
             const SizedBox(height: 24.0),
 
             // Streaks Panel

@@ -708,5 +708,44 @@ void main() {
       expect(fakeNotificationService.scheduledTodos.length, 1);
       expect(fakeNotificationService.scheduledTodos.first.id, spawnedTodo.id);
     });
+
+    test(
+      'reorder updates customOrder and filteredTodoListProvider sorts accordingly',
+      () {
+        final container = createContainer(
+          overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        );
+
+        final notifier = container.read(todoListProvider.notifier);
+        final customOrderNotifier = container.read(
+          todoCustomOrderProvider.notifier,
+        );
+
+        notifier.addTodo('Task 1', priority: TodoPriority.low);
+        notifier.addTodo('Task 2', priority: TodoPriority.medium);
+        notifier.addTodo('Task 3', priority: TodoPriority.high);
+
+        // Default sorting: Completed bottom, then priority.
+        // So high first (Task 3), then medium (Task 2), then low (Task 1).
+        var sorted = container.read(filteredTodoListProvider);
+        expect(sorted[0].title, 'Task 3');
+        expect(sorted[1].title, 'Task 2');
+        expect(sorted[2].title, 'Task 1');
+
+        // Now manually reorder: drag Task 1 (index 2 in sorted list) to the top (index 0)
+        customOrderNotifier.reorder(
+          sorted,
+          container.read(todoListProvider),
+          2,
+          0,
+        );
+
+        // Order should be Task 1, Task 3, Task 2
+        sorted = container.read(filteredTodoListProvider);
+        expect(sorted[0].title, 'Task 1');
+        expect(sorted[1].title, 'Task 3');
+        expect(sorted[2].title, 'Task 2');
+      },
+    );
   });
 }

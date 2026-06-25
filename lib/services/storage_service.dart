@@ -51,5 +51,25 @@ class StorageService {
   Future<bool> setDefaultReminder(String value) =>
       _prefs.setString('default_reminder', value);
 
+  static const String _customOrderKey = 'tidyduu_custom_order';
+
+  List<String> loadCustomOrder() {
+    try {
+      return _prefs.getStringList(_customOrderKey) ?? [];
+    } catch (e, stackTrace) {
+      debugPrint('StorageService: Error loading custom order: $e\n$stackTrace');
+      return [];
+    }
+  }
+
+  Future<bool> saveCustomOrder(List<String> order) async {
+    try {
+      return await _prefs.setStringList(_customOrderKey, order);
+    } catch (e, stackTrace) {
+      debugPrint('StorageService: Error saving custom order: $e\n$stackTrace');
+      return false;
+    }
+  }
+
   Future<bool> clearAllTodos() => _prefs.remove(_todosKey);
 }

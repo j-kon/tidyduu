@@ -40,20 +40,112 @@ final notificationServiceProvider = Provider<NotificationService>((ref) {
   return NotificationService();
 });
 
+// StateNotifierProvider for the custom todo order list (list of task IDs)
+final todoCustomOrderProvider =
+    StateNotifierProvider<TodoCustomOrderNotifier, List<String>>((ref) {
+      final storageService = ref.watch(storageServiceProvider);
+      return TodoCustomOrderNotifier(storageService);
+    });
+
+class TodoCustomOrderNotifier extends StateNotifier<List<String>> {
+  final StorageService _storageService;
+
+  TodoCustomOrderNotifier(this._storageService) : super([]) {
+    _loadOrder();
+  }
+
+  void _loadOrder() {
+    state = _storageService.loadCustomOrder();
+  }
+
+  void saveOrder(List<String> newOrder) {
+    state = newOrder;
+    _storageService.saveCustomOrder(newOrder);
+  }
+
+  void updateOrderForNewTodo(String id) {
+    if (!state.contains(id)) {
+      state = [...state, id];
+      _storageService.saveCustomOrder(state);
+    }
+  }
+
+  void updateOrderForDeletedTodo(String id) {
+    state = state.where((item) => item != id).toList();
+    _storageService.saveCustomOrder(state);
+  }
+
+  void reorder(
+    List<Todo> currentDisplayList,
+    List<Todo> allTodos,
+    int oldIndex,
+    int newIndex,
+  ) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    if (oldIndex == newIndex) return;
+
+    List<String> order = List<String>.from(state);
+    if (order.isEmpty) {
+      // Default sort all todos to initialize the base order list
+      final sortedAll = List<Todo>.from(allTodos)
+        ..sort((a, b) {
+          if (a.isCompleted != b.isCompleted) {
+            return a.isCompleted ? 1 : -1;
+          }
+          if (a.priority != b.priority) {
+            return b.priority.index.compareTo(a.priority.index);
+          }
+          if (a.dueDate != null && b.dueDate != null) {
+            return a.dueDate!.compareTo(b.dueDate!);
+          } else if (a.dueDate != null) {
+            return -1;
+          } else if (b.dueDate != null) {
+            return 1;
+          }
+          return b.createdAt.compareTo(a.createdAt);
+        });
+      order = sortedAll.map((t) => t.id).toList();
+    }
+
+    // Ensure all currently displayed items are present in the order list.
+    for (final todo in currentDisplayList) {
+      if (!order.contains(todo.id)) {
+        order.add(todo.id);
+      }
+    }
+
+    final movedId = currentDisplayList[oldIndex].id;
+    final destId = currentDisplayList[newIndex].id;
+
+    final movedIdx = order.indexOf(movedId);
+    final destIdx = order.indexOf(destId);
+
+    if (movedIdx != -1 && destIdx != -1) {
+      order.removeAt(movedIdx);
+      order.insert(destIdx, movedId);
+    }
+
+    saveOrder(order);
+  }
+}
+
 // StateNotifierProvider for the todo list
 final todoListProvider = StateNotifierProvider<TodoListNotifier, List<Todo>>((
   ref,
 ) {
   final storageService = ref.watch(storageServiceProvider);
   final notificationService = ref.watch(notificationServiceProvider);
-  return TodoListNotifier(storageService, notificationService);
+  return TodoListNotifier(ref, storageService, notificationService);
 });
 
 class TodoListNotifier extends StateNotifier<List<Todo>> {
+  final Ref _ref;
   final StorageService _storageService;
   final NotificationService _notificationService;
 
-  TodoListNotifier(this._storageService, this._notificationService)
+  TodoListNotifier(this._ref, this._storageService, this._notificationService)
     : super([]) {
     _loadTodos();
   }
@@ -212,6 +304,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
 
   void deleteTodo(String id) {
     state = state.where((todo) => todo.id != id).toList();
+    _ref.read(todoCustomOrderProvider.notifier).updateOrderForDeletedTodo(id);
     _storageService.saveTodos(state);
     _notificationService.cancelNotification(id);
   }
@@ -376,14 +469,27 @@ final filteredTodoListProvider = Provider<List<Todo>>((ref) {
         .toList();
   }
 
+  final customOrder = ref.watch(todoCustomOrderProvider);
+
   // Sort tasks:
   // 1. Completed stay lower
-  // 2. High priority first (high -> index 2, medium -> index 1, low -> index 0)
-  // 3. Nearest due date first
-  // 4. Fallback: newest created first
+  // 2. Custom order (if not empty)
+  // 3. Fallback: default sort (high priority first, nearest due date, newest created)
   return filtered..sort((a, b) {
     if (a.isCompleted != b.isCompleted) {
       return a.isCompleted ? 1 : -1;
+    }
+
+    if (customOrder.isNotEmpty) {
+      final indexA = customOrder.indexOf(a.id);
+      final indexB = customOrder.indexOf(b.id);
+      if (indexA != -1 && indexB != -1) {
+        return indexA.compareTo(indexB);
+      } else if (indexA != -1) {
+        return -1;
+      } else if (indexB != -1) {
+        return 1;
+      }
     }
 
     if (a.priority != b.priority) {
@@ -444,10 +550,23 @@ final todayTodoListProvider = Provider<List<Todo>>((ref) {
     return _isSameDay(todo.dueDate, todayStart) || todo.isToday;
   }).toList();
 
-  // Sort: completed bottom, then priority, then due date, then newest created
+  final customOrder = ref.watch(todoCustomOrderProvider);
+
+  // Sort: completed bottom, then custom order (if not empty), then priority, then due date, then newest created
   return filtered..sort((a, b) {
     if (a.isCompleted != b.isCompleted) {
       return a.isCompleted ? 1 : -1;
+    }
+    if (customOrder.isNotEmpty) {
+      final indexA = customOrder.indexOf(a.id);
+      final indexB = customOrder.indexOf(b.id);
+      if (indexA != -1 && indexB != -1) {
+        return indexA.compareTo(indexB);
+      } else if (indexA != -1) {
+        return -1;
+      } else if (indexB != -1) {
+        return 1;
+      }
     }
     if (a.priority != b.priority) {
       return b.priority.index.compareTo(a.priority.index);

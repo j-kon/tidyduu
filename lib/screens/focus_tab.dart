@@ -332,6 +332,35 @@ class FocusTab extends ConsumerWidget {
             child: Stack(
               alignment: Alignment.center,
               children: [
+                if (isRunning)
+                  Container(
+                        width: 200,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color:
+                                  (focusState.isBreak
+                                          ? Colors.green
+                                          : theme.colorScheme.primary)
+                                      .withOpacity(0.25),
+                              blurRadius: 25.0,
+                              spreadRadius: 8.0,
+                            ),
+                          ],
+                        ),
+                      )
+                      .animate(
+                        onPlay: (controller) =>
+                            controller.repeat(reverse: true),
+                      )
+                      .scale(
+                        begin: const Offset(0.96, 0.96),
+                        end: const Offset(1.04, 1.04),
+                        duration: 1500.ms,
+                        curve: Curves.easeInOut,
+                      ),
                 SizedBox(
                   width: 220,
                   height: 220,

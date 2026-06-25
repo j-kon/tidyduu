@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../models/todo.dart';
 import '../providers/todo_provider.dart';
 import '../widgets/todo_item_tile.dart';
 
@@ -29,9 +31,9 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
     });
   }
 
-  bool _hasTasksOnDate(DateTime date) {
+  List<Todo> _getTasksOnDate(DateTime date) {
     final todos = ref.watch(todoListProvider);
-    return todos.any((todo) => _isSameDay(todo.dueDate, date));
+    return todos.where((todo) => _isSameDay(todo.dueDate, date)).toList();
   }
 
   bool _isSameDay(DateTime? a, DateTime b) {
@@ -89,34 +91,37 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
               children: [
                 // Month Navigation Header
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(24.0, 16.0, 24.0, 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        monthStr,
-                        style: theme.textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary,
-                        ),
-                      ),
-                      Row(
+                      padding: const EdgeInsets.fromLTRB(24.0, 8.0, 24.0, 4.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          IconButton(
-                            icon: const Icon(Icons.chevron_left_rounded),
-                            onPressed: () => _changeMonth(-1),
-                            tooltip: 'Previous Month',
+                          Text(
+                            monthStr,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.primary,
+                            ),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.chevron_right_rounded),
-                            onPressed: () => _changeMonth(1),
-                            tooltip: 'Next Month',
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.chevron_left_rounded),
+                                onPressed: () => _changeMonth(-1),
+                                tooltip: 'Previous Month',
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.chevron_right_rounded),
+                                onPressed: () => _changeMonth(1),
+                                tooltip: 'Next Month',
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
+                    )
+                    .animate()
+                    .fadeIn(duration: 300.ms)
+                    .slideY(begin: -0.05, end: 0),
 
                 // Weekday Headers
                 Padding(
@@ -139,128 +144,250 @@ class _CalendarTabState extends ConsumerState<CalendarTab> {
                     }).toList(),
                   ),
                 ),
-                const SizedBox(height: 8.0),
+                const SizedBox(height: 4.0),
 
                 // Calendar Grid
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 7,
-                          mainAxisSpacing: 8.0,
-                          crossAxisSpacing: 8.0,
-                          childAspectRatio: 1.0,
-                        ),
-                    itemCount: totalGridItems,
-                    itemBuilder: (context, index) {
-                      if (index < paddingDays) {
-                        return const SizedBox();
-                      }
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 7,
+                              mainAxisSpacing: 4.0,
+                              crossAxisSpacing: 4.0,
+                              childAspectRatio: 0.8,
+                            ),
+                        itemCount: totalGridItems,
+                        itemBuilder: (context, index) {
+                          if (index < paddingDays) {
+                            return const SizedBox();
+                          }
 
-                      final day = index - paddingDays + 1;
-                      final date = DateTime(
-                        _currentMonth.year,
-                        _currentMonth.month,
-                        day,
-                      );
-                      final isSelected = _isSameDay(date, selectedDate);
+                          final day = index - paddingDays + 1;
+                          final date = DateTime(
+                            _currentMonth.year,
+                            _currentMonth.month,
+                            day,
+                          );
+                          final isSelected = _isSameDay(date, selectedDate);
 
-                      final now = DateTime.now();
-                      final isToday = _isSameDay(
-                        date,
-                        DateTime(now.year, now.month, now.day),
-                      );
-                      final hasTasks = _hasTasksOnDate(date);
+                          final now = DateTime.now();
+                          final isToday = _isSameDay(
+                            date,
+                            DateTime(now.year, now.month, now.day),
+                          );
+                          final dateTodos = _getTasksOnDate(date);
 
-                      return GestureDetector(
-                        onTap: () {
-                          ref
-                                  .read(calendarSelectedDateProvider.notifier)
-                                  .state =
-                              date;
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : isToday
-                                ? theme.colorScheme.primaryContainer
-                                      .withOpacity(0.4)
-                                : Colors.transparent,
-                            shape: BoxShape.circle,
-                            border: isToday && !isSelected
-                                ? Border.all(
-                                    color: theme.colorScheme.primary,
-                                    width: 1.0,
-                                  )
-                                : null,
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '$day',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: isSelected || isToday
-                                      ? FontWeight.bold
-                                      : FontWeight.normal,
+                          return GestureDetector(
+                            onTap: () {
+                              ref
+                                      .read(
+                                        calendarSelectedDateProvider.notifier,
+                                      )
+                                      .state =
+                                  date;
+                            },
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              decoration: BoxDecoration(
+                                color: isToday
+                                    ? theme.colorScheme.primaryContainer
+                                          .withOpacity(0.2)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8.0),
+                                border: Border.all(
                                   color: isSelected
-                                      ? theme.colorScheme.onPrimary
-                                      : theme.colorScheme.onSurface,
+                                      ? theme.colorScheme.primary
+                                      : isToday
+                                      ? theme.colorScheme.primary.withOpacity(
+                                          0.3,
+                                        )
+                                      : theme.colorScheme.outlineVariant
+                                            .withOpacity(0.15),
+                                  width: isSelected ? 2.0 : 1.0,
                                 ),
                               ),
-                              if (hasTasks) ...[
-                                const SizedBox(height: 2.0),
-                                Container(
-                                  width: 4.0,
-                                  height: 4.0,
-                                  decoration: BoxDecoration(
-                                    color: isSelected
-                                        ? theme.colorScheme.onPrimary
-                                        : theme.colorScheme.primary,
-                                    shape: BoxShape.circle,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Align(
+                                    alignment: Alignment.topCenter,
+                                    child:
+                                        Container(
+                                              margin: const EdgeInsets.only(
+                                                top: 3.0,
+                                                bottom: 2.0,
+                                              ),
+                                              width: 20.0,
+                                              height: 20.0,
+                                              alignment: Alignment.center,
+                                              decoration: BoxDecoration(
+                                                color: isSelected
+                                                    ? theme.colorScheme.primary
+                                                    : Colors.transparent,
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Text(
+                                                '$day',
+                                                style: theme
+                                                    .textTheme
+                                                    .bodyMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          isSelected || isToday
+                                                          ? FontWeight.bold
+                                                          : FontWeight.normal,
+                                                      color: isSelected
+                                                          ? theme
+                                                                .colorScheme
+                                                                .onPrimary
+                                                          : isToday
+                                                          ? theme
+                                                                .colorScheme
+                                                                .primary
+                                                          : theme
+                                                                .colorScheme
+                                                                .onSurface,
+                                                      fontSize: 11.0,
+                                                    ),
+                                              ),
+                                            )
+                                            .animate(
+                                              target: isSelected ? 1.0 : 0.0,
+                                            )
+                                            .scale(
+                                              begin: const Offset(0.85, 0.85),
+                                              end: const Offset(1.0, 1.0),
+                                              duration: 200.ms,
+                                              curve: Curves.easeOutBack,
+                                            ),
                                   ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 2.0,
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          ...dateTodos.take(2).map((todo) {
+                                            return Container(
+                                              margin: const EdgeInsets.only(
+                                                bottom: 2.0,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 3.0,
+                                                    vertical: 1.0,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: todo.priority
+                                                    .containerColor(context)
+                                                    .withOpacity(
+                                                      todo.isCompleted
+                                                          ? 0.35
+                                                          : 0.9,
+                                                    ),
+                                                borderRadius:
+                                                    BorderRadius.circular(3.0),
+                                              ),
+                                              child: Text(
+                                                todo.title,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: TextStyle(
+                                                  fontSize: 7.5,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: todo.priority
+                                                      .onContainerColor(context)
+                                                      .withOpacity(
+                                                        todo.isCompleted
+                                                            ? 0.5
+                                                            : 1.0,
+                                                      ),
+                                                  decoration: todo.isCompleted
+                                                      ? TextDecoration
+                                                            .lineThrough
+                                                      : null,
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                          if (dateTodos.length > 2)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                top: 0.5,
+                                              ),
+                                              child: Text(
+                                                '+${dateTodos.length - 2} more',
+                                                textAlign: TextAlign.center,
+                                                style: theme
+                                                    .textTheme
+                                                    .labelSmall
+                                                    ?.copyWith(
+                                                      fontSize: 7.5,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: theme
+                                                          .colorScheme
+                                                          .onSurfaceVariant
+                                                          .withOpacity(0.6),
+                                                    ),
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    )
+                    .animate(delay: 80.ms)
+                    .fadeIn(duration: 350.ms)
+                    .scale(
+                      begin: const Offset(0.97, 0.97),
+                      curve: Curves.easeOutBack,
+                    ),
               ],
             ),
           ),
         ),
-        const Divider(height: 32.0, thickness: 1.0),
+        const Divider(height: 12.0, thickness: 1.0),
 
         // Selected Date Header
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Tasks: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Tasks: ${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  Text(
+                    '${calendarTodos.length} items',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '${calendarTodos.length} items',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8.0),
+            )
+            .animate(delay: 150.ms)
+            .fadeIn(duration: 350.ms)
+            .slideY(begin: 0.1, end: 0),
+        const SizedBox(height: 4.0),
 
         // Tasks for Selected Date
         Expanded(
