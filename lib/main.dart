@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'providers/settings_provider.dart';
 import 'providers/todo_provider.dart';
 import 'screens/home_screen.dart';
 import 'services/notification_service.dart';
@@ -28,17 +29,19 @@ void main() async {
   );
 }
 
-class TidyDuuApp extends StatelessWidget {
+class TidyDuuApp extends ConsumerWidget {
   const TidyDuuApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final settings = ref.watch(settingsProvider);
+
     return MaterialApp(
       title: 'TidyDuu',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system, // Supports OS light/dark modes
+      themeMode: settings.themeMode,
       home: const HomeScreen(),
     );
   }

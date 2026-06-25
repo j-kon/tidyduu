@@ -29,6 +29,9 @@ class FakeNotificationService implements NotificationService {
   Future<void> cancelNotification(String todoId) async {
     cancelledTodoIds.add(todoId);
   }
+
+  @override
+  Future<void> showInstantNotification(String title, String body) async {}
 }
 
 void main() {

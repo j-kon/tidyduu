@@ -37,4 +37,19 @@ class StorageService {
       return false;
     }
   }
+
+  String getThemeMode() => _prefs.getString('theme_mode') ?? 'system';
+  Future<bool> setThemeMode(String value) =>
+      _prefs.setString('theme_mode', value);
+
+  String getDefaultPriority() =>
+      _prefs.getString('default_priority') ?? 'medium';
+  Future<bool> setDefaultPriority(String value) =>
+      _prefs.setString('default_priority', value);
+
+  String getDefaultReminder() => _prefs.getString('default_reminder') ?? 'none';
+  Future<bool> setDefaultReminder(String value) =>
+      _prefs.setString('default_reminder', value);
+
+  Future<bool> clearAllTodos() => _prefs.remove(_todosKey);
 }

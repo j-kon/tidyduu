@@ -104,6 +104,35 @@ class NotificationService {
     await _notificationsPlugin.cancel(id: _getNotificationId(todoId));
   }
 
+  Future<void> showInstantNotification(String title, String body) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+          'tidyduu_focus',
+          'Focus Reminders',
+          channelDescription: 'Notifications for TidyDuu Focus Mode sessions',
+          importance: Importance.max,
+          priority: Priority.high,
+        );
+
+    const DarwinNotificationDetails iOSDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails platformDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
+    await _notificationsPlugin.show(
+      id: 999, // Static ID for focus session alerts
+      title: title,
+      body: body,
+      notificationDetails: platformDetails,
+    );
+  }
+
   DateTime _calculateReminderTime(DateTime dueDate, TodoReminder reminder) {
     switch (reminder) {
       case TodoReminder.atDueTime:

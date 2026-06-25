@@ -417,10 +417,10 @@ final todoStatsProvider = Provider<TodoStats>((ref) {
   );
 });
 
-enum AppTab { tasks, today, calendar }
+enum AppTab { dashboard, tasks, today, calendar, focus }
 
 // Navigation Tab Provider
-final appTabProvider = StateProvider<AppTab>((ref) => AppTab.tasks);
+final appTabProvider = StateProvider<AppTab>((ref) => AppTab.dashboard);
 
 // Selected date for Calendar view (without time)
 final calendarSelectedDateProvider = StateProvider<DateTime>((ref) {

@@ -31,6 +31,9 @@ class FakeNotificationService implements NotificationService {
   Future<void> cancelNotification(String todoId) async {
     cancelledTodoIds.add(todoId);
   }
+
+  @override
+  Future<void> showInstantNotification(String title, String body) async {}
 }
 
 void main() {
@@ -48,6 +51,7 @@ void main() {
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         notificationServiceProvider.overrideWithValue(fakeNotificationService),
+        appTabProvider.overrideWith((ref) => AppTab.tasks),
       ],
       child: const TidyDuuApp(),
     );
@@ -267,7 +271,11 @@ void main() {
     expect(find.text('Study Flutter'), findsOneWidget);
 
     // 3. Search for "Milk"
-    final searchField = find.byType(TextField);
+    final searchField = find.byWidgetPredicate(
+      (widget) =>
+          widget is TextField &&
+          widget.decoration?.hintText == 'Search tasks...',
+    );
     expect(searchField, findsOneWidget);
     await tester.enterText(searchField, 'Milk');
     await tester.pumpAndSettle();
@@ -350,6 +358,7 @@ void main() {
     // Tap the sun icon/button to toggle isToday
     final todayIconButton = find.byTooltip('Add to Today');
     expect(todayIconButton, findsOneWidget);
+    await tester.ensureVisible(todayIconButton);
     await tester.tap(todayIconButton);
     await tester.pumpAndSettle();
 
