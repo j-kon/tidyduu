@@ -9,6 +9,9 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/j-kon/tidyduu/actions/workflows/ci.yml">
+    <img src="https://github.com/j-kon/tidyduu/actions/workflows/ci.yml/badge.svg" alt="TidyDuu CI Badge"/>
+  </a>
   <img src="https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white" alt="Flutter Badge"/>
   <img src="https://img.shields.io/badge/Dart-3.x-0175C2?logo=dart&logoColor=white" alt="Dart Badge"/>
   <img src="https://img.shields.io/badge/Platform-Android%20%7C%20iOS-000000" alt="Platform Badge"/>
@@ -37,7 +40,7 @@ TidyDuu uses a signature modern indigo-purple palette (`0xFF5E5CE6` light, `0xFF
 
 ## 🚀 Key Features
 
-- **📂 Smart Classification**: Group tasks instantly under *Personal, Work, Study, Errands*, or *Other* categories.
+- **📊 Smart Classification**: Group tasks instantly under *Personal, Work, Study, Errands*, or *Other* categories.
 - **⚡ Priority Sorting**: Auto-arrange tasks by priority (*Low, Medium, High*).
 - **📅 Custom Grid Calendar**: Visualize task volume by date on a bespoke grid calendar built using pure Flutter, avoiding dependency conflicts.
 - **☀️ Today Focus**: A dedicated progress cockpit compiling tasks due today or marked for today, featuring a dynamic progress bar.
@@ -48,6 +51,9 @@ TidyDuu uses a signature modern indigo-purple palette (`0xFF5E5CE6` light, `0xFF
 - **👉 Swipe Actions**: Intuitive list gestures. Swipe right to toggle completion, and swipe left to delete with confirmation and instant "Undo".
 - **🔍 Text Search & Multi-Filters**: Filter and search through active/completed tasks by title instantly.
 - **🌓 Native Dark Theme**: Smooth OS-level light/dark theme transitions leveraging Material 3 color schemes.
+- **📈 Dashboard Insights**: Comprehensive metrics detailing active, completed, overdue, and today tasks, along with completion rate rings and consecutive streaks.
+- **⏱️ Focus Mode**: Built-in Pomodoro timer (25 min focus / 5 min break) featuring circular remaining progress rings, subtask checklists, and end-of-session local notifications.
+- **⚙️ Application Settings**: Personalize theme mode preferences (System/Light/Dark), toggle defaults for new task creations (priorities/reminders), request permissions, and access bulk task clearing actions.
 
 ---
 
@@ -61,6 +67,9 @@ lib/
 ├── models/
 │   └── todo.dart             # Pure data entities, subtask models, & enum extensions
 ├── providers/
+│   ├── dashboard_provider.dart # Aggregates statistics, completion rate, and streaks
+│   ├── focus_provider.dart   # Pomodoro focus session timer countdown and break loops
+│   ├── settings_provider.dart # Application settings config state and file operations
 │   └── todo_provider.dart    # Riverpod state notifiers, recurring dates, & UI filters
 ├── theme/
 │   └── app_theme.dart        # Central light & dark Material 3 theme configurations
@@ -69,9 +78,12 @@ lib/
 │   └── notification_service.dart # Local notifications wrapper and exact alarm Scheduler
 ├── screens/
 │   ├── home_screen.dart      # Navigation Shell coordinates tabs
-│   ├── tasks_tab.dart        # Main dashboard list tab
+│   ├── dashboard_tab.dart    # Dashboard statistics tab
+│   ├── tasks_tab.dart        # Main tasks list tab with expanding Quick Add bar
 │   ├── today_tab.dart        # Today focus tab
 │   ├── calendar_tab.dart     # Custom Grid Calendar tab
+│   ├── focus_tab.dart        # Pomodoro focus session tab
+│   ├── settings_screen.dart  # App settings screen
 │   └── task_details_screen.dart # Interactive subtask checklist & task details view
 └── widgets/
     ├── add_edit_dialog.dart  # Form dialog with notes & subtask builder
@@ -88,10 +100,12 @@ lib/
 TidyDuu utilizes **Riverpod 2.x** for dependency injection and state mutation:
 - `todoListProvider` (backed by `TodoListNotifier`) manages the collection of todos. It coordinates persistence triggers and notifies the `NotificationService` whenever changes occur.
 - Combined filtered outputs (`filteredTodoListProvider`, `todayTodoListProvider`, `calendarTodoListProvider`) calculate sorted sub-states automatically on task operations, keeping UI render trees thin and efficient.
+- `focusTimerProvider` manages countdown intervals and state transformations (idle $\leftrightarrow$ running $\leftrightarrow$ paused $\leftrightarrow$ break).
+- `settingsProvider` governs the global configuration state (theme preferences, notifications setup).
 
 ### 2. Local-First Storage (Offline Persistence)
 Local persistence is managed via `StorageService` using a `SharedPreferences` backend:
-- Task structures are converted using custom `toJson` maps and stored as a JSON list.
+- Task structures and app preferences are converted using custom `toJson` maps and stored as serialized strings.
 - **Backward Compatibility**: Factory methods in `Todo` safely deserialize legacy JSON models. Missing fields (e.g., categories or reminders) default gracefully to fallback states, preventing system crashes during app updates.
 
 ### 3. Alarm Reminders & Timezone Scheduling
@@ -142,12 +156,42 @@ dart format .
 
 ---
 
+## 📦 How to Build Release Versions
+
+Before building the release, ensure that any assets and brand paths are properly resolved.
+
+### Android Release
+To build a standalone Android package (APK):
+```bash
+flutter build apk --release
+```
+To build an Android App Bundle (AAB) for Google Play Console submission:
+```bash
+flutter build appbundle --release
+```
+*Note: Build outputs will be generated under `build/app/outputs/flutter-apk/` and `build/app/outputs/bundle/release/`.*
+
+### iOS Release
+To compile the iOS app ready for App Store Connect distribution:
+```bash
+flutter build ios --release
+```
+*Note: To publish to the Apple App Store, configure Xcode signing identities and complete the archiving process using Xcode.*
+
+---
+
 ## 🔮 Future Roadmap
 
 - [ ] **Cross-Device Cloud Sync**: Back data with Firebase Firestore or Supabase database streams.
 - [ ] **Custom Tag Categories**: Let users create custom tags with custom colors and icons.
 - [ ] **AI-Powered Task Prioritization**: Automatic smart ordering of tasks based on historic completions and velocity.
 - [ ] **Productivity Analytics & Metrics**: Staggered graphs showing weekly and monthly task completion rates.
+
+---
+
+## 👤 Author
+
+**J-Kon** - [GitHub Profile](https://github.com/j-kon)
 
 ---
 
