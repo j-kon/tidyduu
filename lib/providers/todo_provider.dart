@@ -359,7 +359,6 @@ final filteredTodoListProvider = Provider<List<Todo>>((ref) {
       filtered = filtered.where((todo) => !todo.isCompleted).toList();
       break;
     case TodoFilter.all:
-    default:
       break;
   }
 

@@ -93,11 +93,11 @@ class AppTheme {
           ),
         ),
       ),
-      navigationBarTheme: NavigationBarThemeData(
+      navigationBarTheme: const NavigationBarThemeData(
         height: 65,
         elevation: 8,
         backgroundColor: cardColorLight,
-        indicatorColor: const Color(0xFFE5E5FF),
+        indicatorColor: Color(0xFFE5E5FF),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
     );
@@ -185,11 +185,11 @@ class AppTheme {
           ),
         ),
       ),
-      navigationBarTheme: NavigationBarThemeData(
+      navigationBarTheme: const NavigationBarThemeData(
         height: 65,
         elevation: 8,
         backgroundColor: cardColorDark,
-        indicatorColor: const Color(0xFF2C2C5E),
+        indicatorColor: Color(0xFF2C2C5E),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
     );

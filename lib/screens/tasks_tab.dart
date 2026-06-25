@@ -237,7 +237,7 @@ class _TasksTabState extends ConsumerState<TasksTab> {
                                 category,
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             ),

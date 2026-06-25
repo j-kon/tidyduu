@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/todo.dart';
 
 class FilterChipWidget extends StatelessWidget {
   final String label;

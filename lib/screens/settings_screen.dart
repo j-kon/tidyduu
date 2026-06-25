@@ -12,8 +12,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _notificationStatus = true;
-
   @override
   void initState() {
     super.initState();
@@ -25,9 +23,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final success = await ref
         .read(notificationServiceProvider)
         .requestPermissions();
-    setState(() {
-      _notificationStatus = success;
-    });
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

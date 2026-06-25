@@ -26,7 +26,6 @@ class EmptyState extends StatelessWidget {
         icon = Icons.star_border_rounded;
         break;
       case TodoFilter.all:
-      default:
         title = 'Clear mind, clean slate';
         subtitle = 'Tap the button below to create your first todo task.';
         icon = Icons.checklist_rtl_rounded;

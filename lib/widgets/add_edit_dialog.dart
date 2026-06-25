@@ -490,7 +490,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                       ),
                     ),
                     subtitle: Text(
-                      "Shows task in your Today view",
+                      'Shows task in your Today view',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant.withOpacity(
                           0.7,
