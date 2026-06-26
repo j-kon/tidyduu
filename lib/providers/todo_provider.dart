@@ -154,6 +154,14 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     state = _storageService.loadTodos();
   }
 
+  int _nextMyDayOrder() {
+    final myDayTodos = state.where((todo) => todo.isPlannedForToday).toList();
+    if (myDayTodos.isEmpty) return 0;
+    return myDayTodos
+        .map((todo) => todo.myDayOrder)
+        .reduce((max, val) => val > max ? val : max) + 1;
+  }
+
   void addTodo(
     String title, {
     String description = '',
@@ -165,10 +173,12 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     String notes = '',
     List<Subtask> subtasks = const [],
     TodoRepeat repeatOption = TodoRepeat.none,
+    bool? isInMyDay,
   }) {
     final trimmedTitle = title.trim();
     if (trimmedTitle.isEmpty) return;
 
+    final nextOrder = isInMyDay == true ? _nextMyDayOrder() : 0;
     final newTodo = Todo(
       id: const Uuid().v4(),
       title: trimmedTitle,
@@ -183,6 +193,9 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
       notes: notes.trim(),
       subtasks: subtasks,
       repeatOption: repeatOption,
+      isInMyDay: isInMyDay,
+      myDayOrder: nextOrder,
+      myDayAddedAt: isInMyDay == true ? DateTime.now() : null,
     );
     state = [...state, newTodo];
     _storageService.saveTodos(state);
@@ -238,6 +251,9 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
           subtasks: updated.subtasks
               .map((s) => s.copyWith(id: const Uuid().v4(), isCompleted: false))
               .toList(),
+          isInMyDay: null,
+          myDayOrder: 0,
+          myDayAddedAt: null,
         );
 
         state = [...state, nextTodo];
@@ -260,6 +276,69 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     _storageService.saveTodos(state);
   }
 
+  void addToMyDay(String id) {
+    state = [
+      for (final todo in state)
+        if (todo.id == id)
+          todo.copyWith(
+            isInMyDay: () => true,
+            myDayAddedAt: () => DateTime.now(),
+            myDayOrder: _nextMyDayOrder(),
+            updatedAt: DateTime.now(),
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
+  void removeFromMyDay(String id) {
+    state = [
+      for (final todo in state)
+        if (todo.id == id)
+          todo.copyWith(
+            isInMyDay: () => false,
+            myDayAddedAt: () => null,
+            myDayOrder: 0,
+            updatedAt: DateTime.now(),
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
+  void toggleMyDay(String id) {
+    final todo = state.firstWhere((t) => t.id == id);
+    if (todo.isPlannedForToday) {
+      removeFromMyDay(id);
+    } else {
+      addToMyDay(id);
+    }
+  }
+
+  void reorderMyDay(List<Todo> displayedMyDayTodos, int oldIndex, int newIndex) {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+    if (oldIndex == newIndex) return;
+
+    final reorderedList = List<Todo>.from(displayedMyDayTodos);
+    final movedTodo = reorderedList.removeAt(oldIndex);
+    reorderedList.insert(newIndex, movedTodo);
+
+    state = [
+      for (final todo in state)
+        if (reorderedList.any((t) => t.id == todo.id))
+          todo.copyWith(
+            myDayOrder: reorderedList.indexWhere((t) => t.id == todo.id),
+          )
+        else
+          todo,
+    ];
+    _storageService.saveTodos(state);
+  }
+
   void editTodo(
     String id,
     String newTitle, {
@@ -272,6 +351,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     String? newNotes,
     List<Subtask>? newSubtasks,
     TodoRepeat? newRepeatOption,
+    bool? Function()? newIsInMyDay,
   }) {
     final trimmedTitle = newTitle.trim();
     if (trimmedTitle.isEmpty) return;
@@ -290,6 +370,7 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
             notes: newNotes?.trim() ?? todo.notes,
             subtasks: newSubtasks ?? todo.subtasks,
             repeatOption: newRepeatOption ?? todo.repeatOption,
+            isInMyDay: newIsInMyDay,
             updatedAt: DateTime.now(),
           )
         else
@@ -522,7 +603,7 @@ final todoStatsProvider = Provider<TodoStats>((ref) {
   );
 });
 
-enum AppTab { dashboard, tasks, today, calendar, focus }
+enum AppTab { dashboard, tasks, myDay, calendar, focus }
 
 // Navigation Tab Provider
 final appTabProvider = StateProvider<AppTab>((ref) => AppTab.dashboard);
@@ -539,34 +620,19 @@ bool _isSameDay(DateTime? a, DateTime b) {
   return a.year == b.year && a.month == b.month && a.day == b.day;
 }
 
-// Provider for Today tasks:
-// Show tasks due today OR marked as isToday.
-final todayTodoListProvider = Provider<List<Todo>>((ref) {
+// Provider for My Day tasks:
+// Show tasks planned for today.
+final myDayTodoListProvider = Provider<List<Todo>>((ref) {
   final todos = ref.watch(todoListProvider);
-  final today = DateTime.now();
-  final todayStart = DateTime(today.year, today.month, today.day);
+  final filtered = todos.where((todo) => todo.isPlannedForToday).toList();
 
-  final filtered = todos.where((todo) {
-    return _isSameDay(todo.dueDate, todayStart) || todo.isToday;
-  }).toList();
-
-  final customOrder = ref.watch(todoCustomOrderProvider);
-
-  // Sort: completed bottom, then custom order (if not empty), then priority, then due date, then newest created
+  // Sort: completed bottom, then myDayOrder, then priority, then due date, then newest created
   return filtered..sort((a, b) {
     if (a.isCompleted != b.isCompleted) {
       return a.isCompleted ? 1 : -1;
     }
-    if (customOrder.isNotEmpty) {
-      final indexA = customOrder.indexOf(a.id);
-      final indexB = customOrder.indexOf(b.id);
-      if (indexA != -1 && indexB != -1) {
-        return indexA.compareTo(indexB);
-      } else if (indexA != -1) {
-        return -1;
-      } else if (indexB != -1) {
-        return 1;
-      }
+    if (a.myDayOrder != b.myDayOrder) {
+      return a.myDayOrder.compareTo(b.myDayOrder);
     }
     if (a.priority != b.priority) {
       return b.priority.index.compareTo(a.priority.index);
@@ -582,9 +648,9 @@ final todayTodoListProvider = Provider<List<Todo>>((ref) {
   });
 });
 
-// Provider that calculates stats of the today's todo list
-final todayStatsProvider = Provider<TodoStats>((ref) {
-  final todos = ref.watch(todayTodoListProvider);
+// Provider that calculates stats of the My Day list
+final myDayStatsProvider = Provider<TodoStats>((ref) {
+  final todos = ref.watch(myDayTodoListProvider);
   final totalCount = todos.length;
   final completedCount = todos.where((todo) => todo.isCompleted).length;
   final activeCount = totalCount - completedCount;
@@ -595,6 +661,23 @@ final todayStatsProvider = Provider<TodoStats>((ref) {
     completedCount: completedCount,
   );
 });
+
+// Provider for encouraging My Day progress messages
+final myDayProgressMessageProvider = Provider<String>((ref) {
+  final stats = ref.watch(myDayStatsProvider);
+  if (stats.totalCount == 0) {
+    return 'Plan your day';
+  }
+  final percentage = stats.completionPercentage;
+  if (percentage == 0.0) return 'Let’s start small today.';
+  if (percentage < 0.50) return 'Nice start, keep going.';
+  if (percentage < 0.75) return 'You’re halfway there.';
+  if (percentage < 1.0) return 'Almost done.';
+  return 'Clean day. Well done.';
+});
+
+// Celebration Provider
+final showCelebrationProvider = StateProvider<bool>((ref) => false);
 
 // Provider for Calendar tasks for selected date
 final calendarTodoListProvider = Provider<List<Todo>>((ref) {

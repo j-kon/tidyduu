@@ -24,7 +24,7 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
   late TodoPriority _selectedPriority;
   DateTime? _selectedDueDate;
   late TodoCategory _selectedCategory;
-  late bool _selectedIsToday;
+  late bool _selectedIsInMyDay;
   late TodoReminder _selectedReminder;
   late TodoRepeat _selectedRepeat;
   late List<Subtask> _localSubtasks;
@@ -49,20 +49,20 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
 
     if (widget.todo == null) {
       final activeTab = ref.read(appTabProvider);
-      if (activeTab == AppTab.today) {
+      if (activeTab == AppTab.myDay) {
         final now = DateTime.now();
         _selectedDueDate = DateTime(now.year, now.month, now.day);
-        _selectedIsToday = true;
+        _selectedIsInMyDay = true;
       } else if (activeTab == AppTab.calendar) {
         _selectedDueDate = ref.read(calendarSelectedDateProvider);
-        _selectedIsToday = false;
+        _selectedIsInMyDay = false;
       } else {
         _selectedDueDate = null;
-        _selectedIsToday = false;
+        _selectedIsInMyDay = false;
       }
     } else {
       _selectedDueDate = widget.todo!.dueDate;
-      _selectedIsToday = widget.todo!.isToday;
+      _selectedIsInMyDay = widget.todo!.isPlannedForToday;
     }
   }
 
@@ -125,11 +125,12 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           priority: _selectedPriority,
           dueDate: _selectedDueDate,
           category: _selectedCategory,
-          isToday: _selectedIsToday,
+          isToday: _selectedIsInMyDay,
           reminder: _selectedReminder,
           notes: _notesController.text,
           subtasks: _localSubtasks,
           repeatOption: _selectedRepeat,
+          isInMyDay: _selectedIsInMyDay,
         );
       } else {
         notifier.editTodo(
@@ -139,11 +140,12 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
           newPriority: _selectedPriority,
           newDueDate: () => _selectedDueDate,
           newCategory: _selectedCategory,
-          newIsToday: _selectedIsToday,
+          newIsToday: _selectedIsInMyDay,
           newReminder: _selectedReminder,
           newNotes: _notesController.text,
           newSubtasks: _localSubtasks,
           newRepeatOption: _selectedRepeat,
+          newIsInMyDay: () => _selectedIsInMyDay,
         );
       }
       Navigator.of(context).pop();
@@ -483,25 +485,25 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
                     title: Text(
-                      "Add to Today's Tasks",
+                      'Add to My Day',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                     subtitle: Text(
-                      'Shows task in your Today view',
+                      'Focus on this task today',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant.withOpacity(
                           0.7,
                         ),
                       ),
                     ),
-                    value: _selectedIsToday,
+                    value: _selectedIsInMyDay,
                     activeColor: theme.colorScheme.primary,
                     onChanged: (value) {
                       setState(() {
-                        _selectedIsToday = value;
+                        _selectedIsInMyDay = value;
                       });
                     },
                   ),

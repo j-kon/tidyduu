@@ -185,6 +185,9 @@ class Todo {
   final List<Subtask> subtasks;
   final TodoRepeat repeatOption;
   final DateTime updatedAt;
+  final bool? isInMyDay;
+  final int myDayOrder;
+  final DateTime? myDayAddedAt;
 
   Todo({
     required this.id,
@@ -201,7 +204,14 @@ class Todo {
     this.subtasks = const [],
     this.repeatOption = TodoRepeat.none,
     DateTime? updatedAt,
+    this.isInMyDay,
+    this.myDayOrder = 0,
+    this.myDayAddedAt,
   }) : updatedAt = updatedAt ?? createdAt;
+
+  bool get isPlannedForToday =>
+      isInMyDay ??
+      (isToday || (dueDate != null && _isSameDay(dueDate, DateTime.now())));
 
   Todo copyWith({
     String? id,
@@ -218,6 +228,9 @@ class Todo {
     List<Subtask>? subtasks,
     TodoRepeat? repeatOption,
     DateTime? updatedAt,
+    bool? Function()? isInMyDay,
+    int? myDayOrder,
+    DateTime? Function()? myDayAddedAt,
   }) {
     return Todo(
       id: id ?? this.id,
@@ -234,6 +247,9 @@ class Todo {
       subtasks: subtasks ?? this.subtasks,
       repeatOption: repeatOption ?? this.repeatOption,
       updatedAt: updatedAt ?? this.updatedAt,
+      isInMyDay: isInMyDay != null ? isInMyDay() : this.isInMyDay,
+      myDayOrder: myDayOrder ?? this.myDayOrder,
+      myDayAddedAt: myDayAddedAt != null ? myDayAddedAt() : this.myDayAddedAt,
     );
   }
 
@@ -253,6 +269,9 @@ class Todo {
       'subtasks': subtasks.map((e) => e.toJson()).toList(),
       'repeatOption': repeatOption.name,
       'updatedAt': updatedAt.toIso8601String(),
+      'isInMyDay': isInMyDay,
+      'myDayOrder': myDayOrder,
+      'myDayAddedAt': myDayAddedAt?.toIso8601String(),
     };
   }
 
@@ -309,6 +328,11 @@ class Todo {
         ? DateTime.parse(updatedAtStr)
         : createdAt;
 
+    final isInMyDay = json['isInMyDay'] as bool?;
+    final myDayOrder = (json['myDayOrder'] ?? 0) as int;
+    final myDayAddedAtStr = json['myDayAddedAt'] as String?;
+    final myDayAddedAt = myDayAddedAtStr != null ? DateTime.tryParse(myDayAddedAtStr) : null;
+
     return Todo(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -324,6 +348,14 @@ class Todo {
       subtasks: subtasks,
       repeatOption: repeatOption,
       updatedAt: updatedAt,
+      isInMyDay: isInMyDay,
+      myDayOrder: myDayOrder,
+      myDayAddedAt: myDayAddedAt,
     );
   }
+}
+
+bool _isSameDay(DateTime? a, DateTime b) {
+  if (a == null) return false;
+  return a.year == b.year && a.month == b.month && a.day == b.day;
 }

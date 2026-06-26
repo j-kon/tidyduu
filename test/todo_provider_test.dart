@@ -407,7 +407,7 @@ void main() {
     });
 
     test(
-      'todayTodoListProvider filters and todayStatsProvider calculates correctly',
+      'myDayTodoListProvider filters and myDayStatsProvider calculates correctly',
       () {
         final container = createContainer(
           overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
@@ -438,8 +438,8 @@ void main() {
             .id;
         notifier.toggleTodo(task3Id);
 
-        // Verify todayTodoListProvider has 3 items (Task 1, 2, 3)
-        final todayList = container.read(todayTodoListProvider);
+        // Verify myDayTodoListProvider has 3 items (Task 1, 2, 3)
+        final todayList = container.read(myDayTodoListProvider);
         expect(todayList.length, 3);
         expect(todayList.any((t) => t.title == 'Due Today Task'), isTrue);
         expect(todayList.any((t) => t.title == 'Starred Today Task'), isTrue);
@@ -450,7 +450,7 @@ void main() {
         expect(todayList.any((t) => t.title == 'Future Task'), isFalse);
 
         // Verify stats
-        final stats = container.read(todayStatsProvider);
+        final stats = container.read(myDayStatsProvider);
         expect(stats.totalCount, 3);
         expect(stats.completedCount, 1);
         expect(stats.activeCount, 2);

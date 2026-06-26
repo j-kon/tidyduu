@@ -49,6 +49,7 @@ By building this application, I practiced:
 
 ## 🚀 Key Features
 
+*   **☀️ My Day Planner (Premium)**: A personalized daily planning dashboard that automatically imports tasks due today and allows manual addition or removal of other tasks. Supports interactive drag-and-drop reordering, progress tracking cards with encouraging dynamic messaging, and satisfying custom confetti celebrations on 100% completion.
 *   **📊 Productivity Insights**: A comprehensive Dashboard compiling total, active, overdue, and today's tasks alongside streak counts and task-priority balances.
 *   **⏱️ Focus Cockpit (Pomodoro)**: A focused workstation containing a Pomodoro timer (25 min focus / 5 min break) with responsive progress rings, subtask checklists, and completion alerts.
 *   **📅 Custom Grid Calendar**: A custom-drawn grid calendar mapping task densities directly to calendar dates without using third-party package dependencies.
@@ -95,13 +96,15 @@ lib/
 │   ├── home_screen.dart      # Primary navigation coordinator and tab shell
 │   ├── dashboard_tab.dart    # Dashboard card insights and statistics
 │   ├── tasks_tab.dart        # Main lists manager with category filters and Quick Add
-│   ├── today_tab.dart        # Today's prioritized cockpit and progress header
+│   ├── my_day_tab.dart       # My Day planner (due today auto-inclusion, drag reordering, progress messages)
 │   ├── calendar_tab.dart     # Grid-drawn custom calendar task scheduler
 │   ├── focus_tab.dart        # Pomodoro session timer and checklist
 │   ├── settings_screen.dart  # Theme segments, default settings, and safety tools
 │   └── task_details_screen.dart # Interactive subtask checklists and detailed settings
 └── widgets/
     ├── add_edit_dialog.dart  # Unified task creation/editing form
+    ├── add_existing_task_bottom_sheet.dart # Bottom sheet search-capable list of existing tasks to add to My Day
+    ├── confetti_widget.dart  # Custom particle painter confetti celebration
     ├── empty_state.dart      # Reusable empty states and decorative icons
     ├── filter_chips.dart     # Category selector elements
     └── todo_item_tile.dart   # Swipe gestures, metadata badges, and priority highlights
@@ -117,7 +120,7 @@ lib/
 2.  **Add Details**: Set a title, write notes, and add subtasks to split your work.
 3.  **Assign Priority & Category**: Select a priority (*Low, Medium, High*) and category tag (*Work, Study, Personal, Errands, Other*).
 4.  **Schedule Alerts**: Set a due date and schedule reminders (e.g. *10 minutes before*).
-5.  **Track in Today & Calendar**: Open the `Today` tab to view today's tasks and watch the progress indicator increase as you complete tasks. Open the `Calendar` tab to view days highlighted by tasks.
+5.  **Plan with My Day & Calendar**: Open the `My Day` tab to view planned tasks, automatically import tasks due today, and manually plan other tasks via the search sheet. Drag tasks to reorder them in your preferred sequence. Complete tasks to see real-time progress updates, hear tactile haptic feedback, and trigger a custom confetti celebration once all planned tasks are checked off. Open the `Calendar` tab to view days highlighted by tasks.
 6.  **Execute Focus Sessions**: Open the `Focus` tab, choose a task, and start the Pomodoro timer (25 min). Check off subtasks as you work.
 7.  **Monitor Insights**: Open the `Dashboard` tab to analyze completed ratios, high-priority task loads, and streak values.
 8.  **Configure Preferences**: Open `Settings` to switch theme modes (System, Light, Dark), adjust defaults, and manage system permissions.
@@ -156,7 +159,7 @@ lib/
 
 ## 🧪 Testing & Verification
 
-TidyDuu has an automated test suite containing **52 test cases** covering model serialization, storage migrations, state mutations, and widget UI interactions.
+TidyDuu has an automated test suite containing **67 test cases** covering model serialization, storage migrations, state mutations, and widget UI interactions.
 
 Verify formatting:
 ```bash

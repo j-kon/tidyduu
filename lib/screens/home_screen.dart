@@ -7,7 +7,7 @@ import 'calendar_tab.dart';
 import 'dashboard_tab.dart';
 import 'focus_tab.dart';
 import 'tasks_tab.dart';
-import 'today_tab.dart';
+import 'my_day_tab.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -60,9 +60,9 @@ class HomeScreen extends ConsumerWidget {
             label: 'Tasks',
           ),
           NavigationDestination(
-            icon: Icon(Icons.today_outlined),
-            selectedIcon: Icon(Icons.today_rounded),
-            label: 'Today',
+            icon: Icon(Icons.wb_sunny_outlined),
+            selectedIcon: Icon(Icons.wb_sunny_rounded),
+            label: 'My Day',
           ),
           NavigationDestination(
             icon: Icon(Icons.calendar_month_outlined),
@@ -102,8 +102,8 @@ class HomeScreen extends ConsumerWidget {
         return const DashboardTab(key: ValueKey('dashboard_tab'));
       case AppTab.tasks:
         return const TasksTab(key: ValueKey('tasks_tab'));
-      case AppTab.today:
-        return const TodayTab(key: ValueKey('today_tab'));
+      case AppTab.myDay:
+        return const MyDayTab(key: ValueKey('my_day_tab'));
       case AppTab.calendar:
         return const CalendarTab(key: ValueKey('calendar_tab'));
       case AppTab.focus:

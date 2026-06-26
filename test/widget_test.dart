@@ -300,7 +300,7 @@ void main() {
   });
 
   testWidgets(
-    'Navigation to Today and Calendar tabs works and displays correct empty states',
+    'Navigation to My Day and Calendar tabs works and displays correct empty states',
     (WidgetTester tester) async {
       await tester.pumpWidget(createWidgetUnderTest());
       await tester.pumpAndSettle();
@@ -308,18 +308,18 @@ void main() {
       // Verify initial state is on Tasks tab
       expect(find.text('Task Progress'), findsOneWidget);
 
-      // Navigate to Today tab using NavigationBar specifically
-      final todayTab = find.descendant(
+      // Navigate to My Day tab using NavigationBar specifically
+      final myDayTab = find.descendant(
         of: find.byType(NavigationBar),
-        matching: find.text('Today'),
+        matching: find.text('My Day'),
       );
-      expect(todayTab, findsOneWidget);
-      await tester.tap(todayTab);
+      expect(myDayTab, findsOneWidget);
+      await tester.tap(myDayTab);
       await tester.pumpAndSettle();
 
-      // Verify Today view is shown
-      expect(find.text("Today's Focus"), findsOneWidget);
-      expect(find.text('Nothing due today'), findsOneWidget);
+      // Verify My Day view is shown
+      expect(find.text('My Day'), findsWidgets); // matches header/tab title
+      expect(find.text('Plan your day'), findsNWidgets(2));
 
       // Navigate to Calendar tab using NavigationBar specifically
       final calendarTab = find.descendant(
@@ -335,7 +335,7 @@ void main() {
     },
   );
 
-  testWidgets('Toggling isToday on task tile in Tasks tab syncs to Today tab', (
+  testWidgets('Toggling isInMyDay on task tile in Tasks tab syncs to My Day tab', (
     WidgetTester tester,
   ) async {
     await tester.pumpWidget(createWidgetUnderTest());
@@ -355,27 +355,29 @@ void main() {
 
     expect(find.text('Important Today Task'), findsOneWidget);
 
-    // Tap the sun icon/button to toggle isToday
-    final todayIconButton = find.byTooltip('Add to Today');
-    expect(todayIconButton, findsOneWidget);
-    await tester.ensureVisible(todayIconButton);
-    await tester.tap(todayIconButton);
+    // Open overflow menu
+    final overflowButton = find.byTooltip('Task Actions');
+    expect(overflowButton, findsOneWidget);
+    await tester.tap(overflowButton);
     await tester.pumpAndSettle();
 
-    // The tooltip should change to 'Remove from Today'
-    expect(find.byTooltip('Remove from Today'), findsOneWidget);
+    // Tap "Add to My Day" menu item
+    final addToMyDayItem = find.text('Add to My Day');
+    expect(addToMyDayItem, findsOneWidget);
+    await tester.tap(addToMyDayItem);
+    await tester.pumpAndSettle();
 
-    // Navigate to Today tab and verify the task is present there
-    final todayTab = find.descendant(
+    // Navigate to My Day tab and verify the task is present there
+    final myDayTab = find.descendant(
       of: find.byType(NavigationBar),
-      matching: find.text('Today'),
+      matching: find.text('My Day'),
     );
-    await tester.tap(todayTab);
+    await tester.tap(myDayTab);
     await tester.pumpAndSettle();
 
-    expect(find.text("Today's Focus"), findsOneWidget);
+    expect(find.text('My Day'), findsWidgets);
     expect(find.text('Important Today Task'), findsOneWidget);
-    expect(find.text('Nothing due today'), findsNothing);
+    expect(find.text('Plan your day'), findsNothing);
   });
 
   testWidgets(

@@ -1,14 +1,47 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../models/todo.dart';
 import '../providers/todo_provider.dart';
 import '../screens/task_details_screen.dart';
+import '../widgets/add_edit_dialog.dart';
 
 class TodoItemTile extends ConsumerWidget {
   final Todo todo;
 
   const TodoItemTile({super.key, required this.todo});
+
+  void _toggleCompletion(BuildContext context, WidgetRef ref) {
+    final wasCompleted = todo.isCompleted;
+    ref.read(todoListProvider.notifier).toggleTodo(todo.id);
+
+    if (!wasCompleted) {
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Task completed! 🎉'),
+          duration: const Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
+          ),
+        ),
+      );
+
+      final myDayTodos = ref.read(myDayTodoListProvider);
+      final activeMyDay = myDayTodos
+          .where((t) => !t.isCompleted && t.id != todo.id)
+          .toList();
+
+      if (myDayTodos.isNotEmpty && activeMyDay.isEmpty) {
+        ref.read(showCelebrationProvider.notifier).state = true;
+      }
+    } else {
+      HapticFeedback.lightImpact();
+    }
+  }
 
   String _formatDateTime(DateTime dt) {
     final now = DateTime.now();
@@ -301,6 +334,7 @@ class TodoItemTile extends ConsumerWidget {
           },
           onDismissed: (direction) {
             if (direction == DismissDirection.endToStart) {
+              HapticFeedback.heavyImpact();
               final notifier = ref.read(todoListProvider.notifier);
               notifier.deleteTodo(todo.id);
 
@@ -322,7 +356,7 @@ class TodoItemTile extends ConsumerWidget {
                 ),
               );
             } else {
-              ref.read(todoListProvider.notifier).toggleTodo(todo.id);
+              _toggleCompletion(context, ref);
             }
           },
           background: Container(
@@ -413,11 +447,7 @@ class TodoItemTile extends ConsumerWidget {
                       label: isCompleted ? 'Mark active' : 'Mark completed',
                       value: isCompleted ? 'checked' : 'unchecked',
                       child: GestureDetector(
-                        onTap: () {
-                          ref
-                              .read(todoListProvider.notifier)
-                              .toggleTodo(todo.id);
-                        },
+                        onTap: () => _toggleCompletion(context, ref),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: 24.0,
@@ -440,10 +470,13 @@ class TodoItemTile extends ConsumerWidget {
                                   Icons.check,
                                   size: 14.0,
                                   color: Colors.white,
-                                ).animate().scale(
-                                  duration: 150.ms,
-                                  curve: Curves.easeOut,
                                 )
+                                  .animate()
+                                  .scale(
+                                    duration: 250.ms,
+                                    curve: Curves.elasticOut,
+                                  )
+                                  .rotate(duration: 200.ms)
                               : null,
                         ),
                       ),
@@ -636,43 +669,148 @@ class TodoItemTile extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 8.0),
-                    // Action Buttons
-                    IconButton(
+                    PopupMenuButton<String>(
                       icon: Icon(
-                        todo.isToday
-                            ? Icons.wb_sunny_rounded
-                            : Icons.wb_sunny_outlined,
-                        size: 20.0,
+                        Icons.more_vert_rounded,
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
                       ),
-                      color: todo.isToday
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant.withOpacity(0.6),
-                      tooltip: todo.isToday
-                          ? 'Remove from Today'
-                          : 'Add to Today',
-                      onPressed: () {
-                        ref
-                            .read(todoListProvider.notifier)
-                            .toggleToday(todo.id);
+                      tooltip: 'Task Actions',
+                      onSelected: (value) async {
+                        switch (value) {
+                          case 'my_day':
+                            ref.read(todoListProvider.notifier).toggleMyDay(todo.id);
+                            break;
+                          case 'today':
+                            ref.read(todoListProvider.notifier).toggleToday(todo.id);
+                            break;
+                          case 'edit':
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              backgroundColor: Colors.transparent,
+                              builder: (context) => AddEditDialog(todo: todo),
+                            );
+                            break;
+                          case 'delete':
+                            final confirmDelete = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                icon: Icon(
+                                  Icons.delete_outline_rounded,
+                                  color: theme.colorScheme.error,
+                                  size: 28.0,
+                                ),
+                                title: const Text('Delete Task?'),
+                                content: Text(
+                                  'Are you sure you want to delete "${todo.title}"? This cannot be undone.',
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(24.0),
+                                ),
+                                actionsAlignment: MainAxisAlignment.spaceEvenly,
+                                actions: [
+                                  OutlinedButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  FilledButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: theme.colorScheme.error,
+                                      foregroundColor: theme.colorScheme.onError,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirmDelete == true) {
+                              HapticFeedback.heavyImpact();
+                              final notifier = ref.read(todoListProvider.notifier);
+                              notifier.deleteTodo(todo.id);
+                              if (!context.mounted) return;
+                              ScaffoldMessenger.of(context).clearSnackBars();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('"${todo.title}" deleted'),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12.0),
+                                  ),
+                                ),
+                              );
+                            }
+                            break;
+                        }
                       },
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 16.0,
-                      ),
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                        0.6,
-                      ),
-                      tooltip: 'View Details',
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                TaskDetailsScreen(todoId: todo.id),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'my_day',
+                          child: Row(
+                            children: [
+                              Icon(
+                                todo.isPlannedForToday
+                                    ? Icons.wb_sunny_rounded
+                                    : Icons.wb_sunny_outlined,
+                                size: 20.0,
+                                color: todo.isPlannedForToday
+                                    ? theme.colorScheme.primary
+                                    : null,
+                              ),
+                              const SizedBox(width: 12.0),
+                              Text(todo.isPlannedForToday
+                                  ? 'Remove from My Day'
+                                  : 'Add to My Day'),
+                            ],
                           ),
-                        );
-                      },
+                        ),
+                        PopupMenuItem(
+                          value: 'today',
+                          child: Row(
+                            children: [
+                              Icon(
+                                todo.isToday
+                                    ? Icons.star_rounded
+                                    : Icons.star_outline_rounded,
+                                size: 20.0,
+                                color: todo.isToday ? Colors.amber : null,
+                              ),
+                              const SizedBox(width: 12.0),
+                              Text(todo.isToday
+                                  ? 'Unstar Task'
+                                  : 'Star Task'),
+                            ],
+                          ),
+                        ),
+                        const PopupMenuDivider(),
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Row(
+                            children: [
+                              Icon(Icons.edit_outlined, size: 20.0),
+                              SizedBox(width: 12.0),
+                              Text('Edit Task'),
+                            ],
+                          ),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20.0,
+                                color: theme.colorScheme.error,
+                              ),
+                              const SizedBox(width: 12.0),
+                              Text(
+                                'Delete Task',
+                                style: TextStyle(color: theme.colorScheme.error),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -682,6 +820,9 @@ class TodoItemTile extends ConsumerWidget {
         )
         .animate()
         .fadeIn(duration: 250.ms)
-        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic);
+        .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic)
+        .animate(target: isCompleted ? 1.0 : 0.0)
+        .scale(begin: const Offset(1.0, 1.0), end: const Offset(0.98, 0.98), duration: 200.ms, curve: Curves.easeInOut)
+        .custom(builder: (context, value, child) => Opacity(opacity: 1.0 - (value * 0.2), child: child));
   }
 }

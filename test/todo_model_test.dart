@@ -146,6 +146,9 @@ void main() {
         ],
         'repeatOption': 'monthly',
         'updatedAt': testDate.toIso8601String(),
+        'isInMyDay': null,
+        'myDayOrder': 0,
+        'myDayAddedAt': null,
       });
     });
 

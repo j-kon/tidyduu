@@ -104,12 +104,12 @@ class _TaskDetailsScreenState extends ConsumerState<TaskDetailsScreen> {
           ),
           IconButton(
             icon: Icon(
-              todo.isToday ? Icons.wb_sunny_rounded : Icons.wb_sunny_outlined,
-              color: todo.isToday ? theme.colorScheme.primary : null,
+              todo.isPlannedForToday ? Icons.wb_sunny_rounded : Icons.wb_sunny_outlined,
+              color: todo.isPlannedForToday ? theme.colorScheme.primary : null,
             ),
-            tooltip: todo.isToday ? 'Remove from Today' : 'Add to Today',
+            tooltip: todo.isPlannedForToday ? 'Remove from My Day' : 'Add to My Day',
             onPressed: () {
-              ref.read(todoListProvider.notifier).toggleToday(todo.id);
+              ref.read(todoListProvider.notifier).toggleMyDay(todo.id);
             },
           ),
         ],
