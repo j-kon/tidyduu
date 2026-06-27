@@ -65,7 +65,7 @@ void main() {
       notifier.addTodo('Test Task 1');
       var list = container.read(todoListProvider);
       expect(list.length, 1);
-      
+
       final task = list.first;
       expect(task.isPlannedForToday, false); // initially false
 
@@ -107,7 +107,7 @@ void main() {
 
       var myDayList = container.read(myDayTodoListProvider);
       expect(myDayList.length, 3);
-      
+
       // Initially, they are added in order of myDayOrder
       expect(myDayList[0].id, id1);
       expect(myDayList[1].id, id2);
@@ -193,37 +193,40 @@ void main() {
       expect(container.read(showCelebrationProvider), true);
     });
 
-    test('Old saved todos loading safely after model changes (backward compatibility)', () {
-      final legacyJson = [
-        {
-          'id': 'legacy_id_1',
-          'title': 'Legacy Task 1',
-          'description': 'Description 1',
-          'isCompleted': false,
-          'createdAt': '2026-06-25T12:00:00.000Z',
-          'priority': 'medium',
-          'category': 'work',
-          'isToday': false,
-          'reminder': 'none',
-          'notes': '',
-          'subtasks': [],
-          'repeatOption': 'none',
-          'updatedAt': '2026-06-25T12:00:00.000Z'
-        }
-      ];
+    test(
+      'Old saved todos loading safely after model changes (backward compatibility)',
+      () {
+        final legacyJson = [
+          {
+            'id': 'legacy_id_1',
+            'title': 'Legacy Task 1',
+            'description': 'Description 1',
+            'isCompleted': false,
+            'createdAt': '2026-06-25T12:00:00.000Z',
+            'priority': 'medium',
+            'category': 'work',
+            'isToday': false,
+            'reminder': 'none',
+            'notes': '',
+            'subtasks': [],
+            'repeatOption': 'none',
+            'updatedAt': '2026-06-25T12:00:00.000Z',
+          },
+        ];
 
-      // Save legacy json directly to mock shared preferences
-      sharedPrefs.setString('tidyduu_todos', jsonEncode(legacyJson));
+        // Save legacy json directly to mock shared preferences
+        sharedPrefs.setString('tidyduu_todos', jsonEncode(legacyJson));
 
-      final storageService = container.read(storageServiceProvider);
-      final loaded = storageService.loadTodos();
+        final storageService = container.read(storageServiceProvider);
+        final loaded = storageService.loadTodos();
 
-      expect(loaded.length, 1);
-      expect(loaded.first.id, 'legacy_id_1');
-      expect(loaded.first.title, 'Legacy Task 1');
-      expect(loaded.first.isInMyDay, null); // should parse safely as null
-      expect(loaded.first.myDayOrder, 0);   // should default to 0
-      expect(loaded.first.myDayAddedAt, null); // should parse safely as null
-    });
+        expect(loaded.length, 1);
+        expect(loaded.first.id, 'legacy_id_1');
+        expect(loaded.first.title, 'Legacy Task 1');
+        expect(loaded.first.isInMyDay, null); // should parse safely as null
+        expect(loaded.first.myDayOrder, 0); // should default to 0
+        expect(loaded.first.myDayAddedAt, null); // should parse safely as null
+      },
+    );
   });
 }

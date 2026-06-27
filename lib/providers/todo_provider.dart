@@ -158,8 +158,9 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     final myDayTodos = state.where((todo) => todo.isPlannedForToday).toList();
     if (myDayTodos.isEmpty) return 0;
     return myDayTodos
-        .map((todo) => todo.myDayOrder)
-        .reduce((max, val) => val > max ? val : max) + 1;
+            .map((todo) => todo.myDayOrder)
+            .reduce((max, val) => val > max ? val : max) +
+        1;
   }
 
   void addTodo(
@@ -317,7 +318,11 @@ class TodoListNotifier extends StateNotifier<List<Todo>> {
     }
   }
 
-  void reorderMyDay(List<Todo> displayedMyDayTodos, int oldIndex, int newIndex) {
+  void reorderMyDay(
+    List<Todo> displayedMyDayTodos,
+    int oldIndex,
+    int newIndex,
+  ) {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }

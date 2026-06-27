@@ -467,16 +467,16 @@ class TodoItemTile extends ConsumerWidget {
                           ),
                           child: isCompleted
                               ? const Icon(
-                                  Icons.check,
-                                  size: 14.0,
-                                  color: Colors.white,
-                                )
-                                  .animate()
-                                  .scale(
-                                    duration: 250.ms,
-                                    curve: Curves.elasticOut,
-                                  )
-                                  .rotate(duration: 200.ms)
+                                      Icons.check,
+                                      size: 14.0,
+                                      color: Colors.white,
+                                    )
+                                    .animate()
+                                    .scale(
+                                      duration: 250.ms,
+                                      curve: Curves.elasticOut,
+                                    )
+                                    .rotate(duration: 200.ms)
                               : null,
                         ),
                       ),
@@ -672,16 +672,22 @@ class TodoItemTile extends ConsumerWidget {
                     PopupMenuButton<String>(
                       icon: Icon(
                         Icons.more_vert_rounded,
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(0.8),
+                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
+                          0.8,
+                        ),
                       ),
                       tooltip: 'Task Actions',
                       onSelected: (value) async {
                         switch (value) {
                           case 'my_day':
-                            ref.read(todoListProvider.notifier).toggleMyDay(todo.id);
+                            ref
+                                .read(todoListProvider.notifier)
+                                .toggleMyDay(todo.id);
                             break;
                           case 'today':
-                            ref.read(todoListProvider.notifier).toggleToday(todo.id);
+                            ref
+                                .read(todoListProvider.notifier)
+                                .toggleToday(todo.id);
                             break;
                           case 'edit':
                             showModalBottomSheet(
@@ -710,14 +716,17 @@ class TodoItemTile extends ConsumerWidget {
                                 actionsAlignment: MainAxisAlignment.spaceEvenly,
                                 actions: [
                                   OutlinedButton(
-                                    onPressed: () => Navigator.pop(context, false),
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
                                     child: const Text('Cancel'),
                                   ),
                                   FilledButton(
-                                    onPressed: () => Navigator.pop(context, true),
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
                                     style: FilledButton.styleFrom(
                                       backgroundColor: theme.colorScheme.error,
-                                      foregroundColor: theme.colorScheme.onError,
+                                      foregroundColor:
+                                          theme.colorScheme.onError,
                                     ),
                                     child: const Text('Delete'),
                                   ),
@@ -726,7 +735,9 @@ class TodoItemTile extends ConsumerWidget {
                             );
                             if (confirmDelete == true) {
                               HapticFeedback.heavyImpact();
-                              final notifier = ref.read(todoListProvider.notifier);
+                              final notifier = ref.read(
+                                todoListProvider.notifier,
+                              );
                               notifier.deleteTodo(todo.id);
                               if (!context.mounted) return;
                               ScaffoldMessenger.of(context).clearSnackBars();
@@ -758,9 +769,11 @@ class TodoItemTile extends ConsumerWidget {
                                     : null,
                               ),
                               const SizedBox(width: 12.0),
-                              Text(todo.isPlannedForToday
-                                  ? 'Remove from My Day'
-                                  : 'Add to My Day'),
+                              Text(
+                                todo.isPlannedForToday
+                                    ? 'Remove from My Day'
+                                    : 'Add to My Day',
+                              ),
                             ],
                           ),
                         ),
@@ -776,9 +789,7 @@ class TodoItemTile extends ConsumerWidget {
                                 color: todo.isToday ? Colors.amber : null,
                               ),
                               const SizedBox(width: 12.0),
-                              Text(todo.isToday
-                                  ? 'Unstar Task'
-                                  : 'Star Task'),
+                              Text(todo.isToday ? 'Unstar Task' : 'Star Task'),
                             ],
                           ),
                         ),
@@ -805,7 +816,9 @@ class TodoItemTile extends ConsumerWidget {
                               const SizedBox(width: 12.0),
                               Text(
                                 'Delete Task',
-                                style: TextStyle(color: theme.colorScheme.error),
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
                               ),
                             ],
                           ),
@@ -822,7 +835,15 @@ class TodoItemTile extends ConsumerWidget {
         .fadeIn(duration: 250.ms)
         .slideY(begin: 0.1, end: 0, curve: Curves.easeOutCubic)
         .animate(target: isCompleted ? 1.0 : 0.0)
-        .scale(begin: const Offset(1.0, 1.0), end: const Offset(0.98, 0.98), duration: 200.ms, curve: Curves.easeInOut)
-        .custom(builder: (context, value, child) => Opacity(opacity: 1.0 - (value * 0.2), child: child));
+        .scale(
+          begin: const Offset(1.0, 1.0),
+          end: const Offset(0.98, 0.98),
+          duration: 200.ms,
+          curve: Curves.easeInOut,
+        )
+        .custom(
+          builder: (context, value, child) =>
+              Opacity(opacity: 1.0 - (value * 0.2), child: child),
+        );
   }
 }

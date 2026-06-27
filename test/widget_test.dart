@@ -335,50 +335,51 @@ void main() {
     },
   );
 
-  testWidgets('Toggling isInMyDay on task tile in Tasks tab syncs to My Day tab', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(createWidgetUnderTest());
-    await tester.pumpAndSettle();
+  testWidgets(
+    'Toggling isInMyDay on task tile in Tasks tab syncs to My Day tab',
+    (WidgetTester tester) async {
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
 
-    // Add a task
-    await tester.tap(find.byType(FloatingActionButton));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Task Title'),
-      'Important Today Task',
-    );
-    final createBtn = find.text('Create');
-    await tester.ensureVisible(createBtn);
-    await tester.tap(createBtn);
-    await tester.pumpAndSettle();
+      // Add a task
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Task Title'),
+        'Important Today Task',
+      );
+      final createBtn = find.text('Create');
+      await tester.ensureVisible(createBtn);
+      await tester.tap(createBtn);
+      await tester.pumpAndSettle();
 
-    expect(find.text('Important Today Task'), findsOneWidget);
+      expect(find.text('Important Today Task'), findsOneWidget);
 
-    // Open overflow menu
-    final overflowButton = find.byTooltip('Task Actions');
-    expect(overflowButton, findsOneWidget);
-    await tester.tap(overflowButton);
-    await tester.pumpAndSettle();
+      // Open overflow menu
+      final overflowButton = find.byTooltip('Task Actions');
+      expect(overflowButton, findsOneWidget);
+      await tester.tap(overflowButton);
+      await tester.pumpAndSettle();
 
-    // Tap "Add to My Day" menu item
-    final addToMyDayItem = find.text('Add to My Day');
-    expect(addToMyDayItem, findsOneWidget);
-    await tester.tap(addToMyDayItem);
-    await tester.pumpAndSettle();
+      // Tap "Add to My Day" menu item
+      final addToMyDayItem = find.text('Add to My Day');
+      expect(addToMyDayItem, findsOneWidget);
+      await tester.tap(addToMyDayItem);
+      await tester.pumpAndSettle();
 
-    // Navigate to My Day tab and verify the task is present there
-    final myDayTab = find.descendant(
-      of: find.byType(NavigationBar),
-      matching: find.text('My Day'),
-    );
-    await tester.tap(myDayTab);
-    await tester.pumpAndSettle();
+      // Navigate to My Day tab and verify the task is present there
+      final myDayTab = find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('My Day'),
+      );
+      await tester.tap(myDayTab);
+      await tester.pumpAndSettle();
 
-    expect(find.text('My Day'), findsWidgets);
-    expect(find.text('Important Today Task'), findsOneWidget);
-    expect(find.text('Plan your day'), findsNothing);
-  });
+      expect(find.text('My Day'), findsWidgets);
+      expect(find.text('Important Today Task'), findsOneWidget);
+      expect(find.text('Plan your day'), findsNothing);
+    },
+  );
 
   testWidgets(
     'Adding a task in Calendar view prepopulates the due date with selected date',

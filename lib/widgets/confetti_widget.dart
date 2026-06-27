@@ -25,18 +25,22 @@ class _ConfettiWidgetState extends State<ConfettiWidget>
       if (!mounted) return;
       final size = MediaQuery.of(context).size;
       for (int i = 0; i < 80; i++) {
-        _particles.add(ConfettiParticle(
-          x: _random.nextDouble() * size.width,
-          y: -_random.nextDouble() * 200, // start above screen
-          vx: (_random.nextDouble() - 0.5) * 4.0, // horizontal velocity
-          vy: _random.nextDouble() * 4.0 + 3.0, // vertical falling velocity
-          color: Colors.primaries[_random.nextInt(Colors.primaries.length)],
-          rotation: _random.nextDouble() * pi * 2,
-          rotationSpeed: (_random.nextDouble() - 0.5) * 0.2,
-          width: _random.nextDouble() * 8 + 6,
-          height: _random.nextDouble() * 12 + 8,
-          shape: _random.nextBool() ? ParticleShape.rectangle : ParticleShape.circle,
-        ));
+        _particles.add(
+          ConfettiParticle(
+            x: _random.nextDouble() * size.width,
+            y: -_random.nextDouble() * 200, // start above screen
+            vx: (_random.nextDouble() - 0.5) * 4.0, // horizontal velocity
+            vy: _random.nextDouble() * 4.0 + 3.0, // vertical falling velocity
+            color: Colors.primaries[_random.nextInt(Colors.primaries.length)],
+            rotation: _random.nextDouble() * pi * 2,
+            rotationSpeed: (_random.nextDouble() - 0.5) * 0.2,
+            width: _random.nextDouble() * 8 + 6,
+            height: _random.nextDouble() * 12 + 8,
+            shape: _random.nextBool()
+                ? ParticleShape.rectangle
+                : ParticleShape.circle,
+          ),
+        );
       }
       _controller.forward();
     });
@@ -133,7 +137,11 @@ class ConfettiPainter extends CustomPainter {
 
       if (p.shape == ParticleShape.rectangle) {
         canvas.drawRect(
-          Rect.fromCenter(center: Offset.zero, width: p.width, height: p.height),
+          Rect.fromCenter(
+            center: Offset.zero,
+            width: p.width,
+            height: p.height,
+          ),
           paint,
         );
       } else {

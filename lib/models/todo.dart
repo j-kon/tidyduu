@@ -331,7 +331,9 @@ class Todo {
     final isInMyDay = json['isInMyDay'] as bool?;
     final myDayOrder = (json['myDayOrder'] ?? 0) as int;
     final myDayAddedAtStr = json['myDayAddedAt'] as String?;
-    final myDayAddedAt = myDayAddedAtStr != null ? DateTime.tryParse(myDayAddedAtStr) : null;
+    final myDayAddedAt = myDayAddedAtStr != null
+        ? DateTime.tryParse(myDayAddedAtStr)
+        : null;
 
     return Todo(
       id: json['id'] as String,

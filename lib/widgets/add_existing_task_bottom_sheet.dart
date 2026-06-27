@@ -21,14 +21,12 @@ class _AddExistingTaskBottomSheetState
     final todos = ref.watch(todoListProvider);
 
     // Filter tasks: active, not in My Day
-    final myDayIds = ref
-        .watch(myDayTodoListProvider)
-        .map((t) => t.id)
-        .toSet();
+    final myDayIds = ref.watch(myDayTodoListProvider).map((t) => t.id).toSet();
 
     List<Todo> availableTasks = todos.where((todo) {
       final isNotInMyDay = !myDayIds.contains(todo.id);
-      final matchesSearch = todo.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+      final matchesSearch =
+          todo.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           todo.description.toLowerCase().contains(_searchQuery.toLowerCase());
       return isNotInMyDay && matchesSearch;
     }).toList();
@@ -114,8 +112,12 @@ class _AddExistingTaskBottomSheetState
                       final todo = availableTasks[index];
                       return ListTile(
                         leading: CircleAvatar(
-                          backgroundColor: todo.priority.containerColor(context),
-                          foregroundColor: todo.priority.onContainerColor(context),
+                          backgroundColor: todo.priority.containerColor(
+                            context,
+                          ),
+                          foregroundColor: todo.priority.onContainerColor(
+                            context,
+                          ),
                           child: Icon(todo.category.icon, size: 18.0),
                         ),
                         title: Text(
@@ -145,7 +147,9 @@ class _AddExistingTaskBottomSheetState
                                 .addToMyDay(todo.id);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Added "${todo.title}" to My Day'),
+                                content: Text(
+                                  'Added "${todo.title}" to My Day',
+                                ),
                                 duration: const Duration(seconds: 1),
                               ),
                             );

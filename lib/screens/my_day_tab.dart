@@ -26,7 +26,7 @@ class MyDayTab extends ConsumerWidget {
       'Thursday',
       'Friday',
       'Saturday',
-      'Sunday'
+      'Sunday',
     ];
     final months = [
       'January',
@@ -40,7 +40,7 @@ class MyDayTab extends ConsumerWidget {
       'September',
       'October',
       'November',
-      'December'
+      'December',
     ];
     final formattedDate =
         '${weekdays[now.weekday - 1]}, ${months[now.month - 1]} ${now.day}';
@@ -88,7 +88,10 @@ class MyDayTab extends ConsumerWidget {
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.playlist_add_rounded, size: 28.0),
+                        icon: const Icon(
+                          Icons.playlist_add_rounded,
+                          size: 28.0,
+                        ),
                         color: theme.colorScheme.primary,
                         tooltip: 'Add existing task',
                         onPressed: () {
@@ -96,7 +99,8 @@ class MyDayTab extends ConsumerWidget {
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
-                            builder: (context) => const AddExistingTaskBottomSheet(),
+                            builder: (context) =>
+                                const AddExistingTaskBottomSheet(),
                           );
                         },
                       ),
@@ -146,7 +150,8 @@ class MyDayTab extends ConsumerWidget {
                           child: LinearProgressIndicator(
                             value: stats.completionPercentage,
                             minHeight: 8.0,
-                            backgroundColor: theme.colorScheme.surface.withOpacity(0.3),
+                            backgroundColor: theme.colorScheme.surface
+                                .withOpacity(0.3),
                             valueColor: AlwaysStoppedAnimation<Color>(
                               theme.colorScheme.primary,
                             ),
@@ -156,7 +161,8 @@ class MyDayTab extends ConsumerWidget {
                         Text(
                           progressMsg,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onPrimaryContainer.withOpacity(0.8),
+                            color: theme.colorScheme.onPrimaryContainer
+                                .withOpacity(0.8),
                             fontStyle: FontStyle.italic,
                           ),
                         ),
@@ -182,18 +188,13 @@ class MyDayTab extends ConsumerWidget {
                         HapticFeedback.lightImpact();
                         ref
                             .read(todoListProvider.notifier)
-                            .reorderMyDay(
-                              myDayTodos,
-                              oldIndex,
-                              newIndex,
-                            );
+                            .reorderMyDay(myDayTodos, oldIndex, newIndex);
                       },
                     ),
             ),
           ],
         ),
-        if (showCelebration)
-          const ConfettiWidget(),
+        if (showCelebration) const ConfettiWidget(),
       ],
     );
   }
@@ -247,7 +248,10 @@ class MyDayTab extends ConsumerWidget {
               icon: const Icon(Icons.playlist_add_rounded),
               label: const Text('Add existing task'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 12.0,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16.0),
                 ),
