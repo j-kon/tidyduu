@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -157,458 +158,471 @@ class _AddEditDialogState extends ConsumerState<AddEditDialog> {
     final theme = Theme.of(context);
     final isEditing = widget.todo != null;
 
-    return Material(
-      color: theme.colorScheme.surface,
+    return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(28.0),
         topRight: Radius.circular(28.0),
       ),
-      child: Padding(
-        padding: EdgeInsets.only(
-          top: 8.0,
-          left: 24.0,
-          right: 24.0,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
-        ),
-        child: Form(
-          key: _formKey,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight:
-                  MediaQuery.of(context).size.height * 0.85 -
-                  MediaQuery.of(context).viewInsets.bottom,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 15.0, sigmaY: 15.0),
+        child: Material(
+          color: theme.colorScheme.surface.withOpacity(0.75),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(28.0),
+            topRight: Radius.circular(28.0),
+          ),
+          child: Padding(
+            padding: EdgeInsets.only(
+              top: 8.0,
+              left: 24.0,
+              right: 24.0,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
             ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Drag handle
-                  Center(
-                    child: Container(
-                      width: 48.0,
-                      height: 4.0,
-                      margin: const EdgeInsets.symmetric(vertical: 12.0),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                          0.4,
-                        ),
-                        borderRadius: BorderRadius.circular(2.0),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Text(
-                    isEditing ? 'Edit Task' : 'New Task',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 20.0),
-
-                  // Form fields (Staggered fade in entry)
-                  Column(
+            child: Form(
+              key: _formKey,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight:
+                      MediaQuery.of(context).size.height * 0.85 -
+                      MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Title Field
-                      TextFormField(
-                        controller: _titleController,
-                        autofocus: true,
-                        textCapitalization: TextCapitalization.sentences,
-                        style: theme.textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          labelText: 'Task Title',
-                          hintText: 'What needs to be done?',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.0),
+                      // Drag handle
+                      Center(
+                        child: Container(
+                          width: 48.0,
+                          height: 4.0,
+                          margin: const EdgeInsets.symmetric(vertical: 12.0),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withOpacity(0.4),
+                            borderRadius: BorderRadius.circular(2.0),
                           ),
-                          prefixIcon: const Icon(Icons.title_rounded),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Please enter a title';
-                          }
-                          return null;
+                      ),
+                      const SizedBox(height: 8.0),
+                      Text(
+                        isEditing ? 'Edit Task' : 'New Task',
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 20.0),
+
+                      // Form fields (Staggered fade in entry)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Title Field
+                          TextFormField(
+                            controller: _titleController,
+                            autofocus: true,
+                            textCapitalization: TextCapitalization.sentences,
+                            style: theme.textTheme.bodyLarge,
+                            decoration: InputDecoration(
+                              labelText: 'Task Title',
+                              hintText: 'What needs to be done?',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                              prefixIcon: const Icon(Icons.title_rounded),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Please enter a title';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 16.0),
+
+                          // Description Field
+                          TextFormField(
+                            controller: _descriptionController,
+                            textCapitalization: TextCapitalization.sentences,
+                            maxLines: 2,
+                            style: theme.textTheme.bodyLarge,
+                            decoration: InputDecoration(
+                              labelText: 'Description (Optional)',
+                              hintText: 'Add details or notes...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                              prefixIcon: const Icon(
+                                Icons.description_outlined,
+                              ),
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                          const SizedBox(height: 16.0),
+
+                          // Notes Field
+                          TextFormField(
+                            controller: _notesController,
+                            textCapitalization: TextCapitalization.sentences,
+                            maxLines: 3,
+                            style: theme.textTheme.bodyLarge,
+                            decoration: InputDecoration(
+                              labelText: 'Notes (Optional)',
+                              hintText: 'Add persistent reference text...',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12.0),
+                              ),
+                              prefixIcon: const Icon(Icons.notes_rounded),
+                              alignLabelWithHint: true,
+                            ),
+                          ),
+                        ],
+                      ).animate().fadeIn(duration: 200.ms),
+
+                      const SizedBox(height: 20.0),
+
+                      // Category Selection
+                      Text(
+                        'Category',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 4.0,
+                        children: TodoCategory.values.map((category) {
+                          final isSelected = _selectedCategory == category;
+                          return ChoiceChip(
+                            label: Text(category.label),
+                            avatar: Icon(
+                              category.icon,
+                              size: 16.0,
+                              color: isSelected
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) {
+                                setState(() {
+                                  _selectedCategory = category;
+                                });
+                              }
+                            },
+                            selectedColor: theme.colorScheme.primary,
+                            labelStyle: TextStyle(
+                              color: isSelected
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurfaceVariant,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            backgroundColor: theme.colorScheme.surfaceVariant
+                                .withOpacity(0.3),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                              side: BorderSide(
+                                color: isSelected
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.outlineVariant
+                                          .withOpacity(0.5),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 20.0),
+
+                      // Priority Selection
+                      Text(
+                        'Priority',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 8.0),
+                      SegmentedButton<TodoPriority>(
+                        segments: const [
+                          ButtonSegment<TodoPriority>(
+                            value: TodoPriority.low,
+                            label: Text('Low'),
+                          ),
+                          ButtonSegment<TodoPriority>(
+                            value: TodoPriority.medium,
+                            label: Text('Medium'),
+                          ),
+                          ButtonSegment<TodoPriority>(
+                            value: TodoPriority.high,
+                            label: Text('High'),
+                          ),
+                        ],
+                        selected: {_selectedPriority},
+                        onSelectionChanged: (newSelection) {
+                          setState(() {
+                            _selectedPriority = newSelection.first;
+                          });
                         },
                       ),
-                      const SizedBox(height: 16.0),
+                      const SizedBox(height: 20.0),
 
-                      // Description Field
-                      TextFormField(
-                        controller: _descriptionController,
-                        textCapitalization: TextCapitalization.sentences,
-                        maxLines: 2,
-                        style: theme.textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          labelText: 'Description (Optional)',
-                          hintText: 'Add details or notes...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          prefixIcon: const Icon(Icons.description_outlined),
-                          alignLabelWithHint: true,
+                      // Due Date & Repeat Options
+                      Text(
+                        'Due Date & Repeat Settings',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                      const SizedBox(height: 16.0),
-
-                      // Notes Field
-                      TextFormField(
-                        controller: _notesController,
-                        textCapitalization: TextCapitalization.sentences,
-                        maxLines: 3,
-                        style: theme.textTheme.bodyLarge,
-                        decoration: InputDecoration(
-                          labelText: 'Notes (Optional)',
-                          hintText: 'Add persistent reference text...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.0),
-                          ),
-                          prefixIcon: const Icon(Icons.notes_rounded),
-                          alignLabelWithHint: true,
-                        ),
-                      ),
-                    ],
-                  ).animate().fadeIn(duration: 200.ms),
-
-                  const SizedBox(height: 20.0),
-
-                  // Category Selection
-                  Text(
-                    'Category',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Wrap(
-                    spacing: 8.0,
-                    runSpacing: 4.0,
-                    children: TodoCategory.values.map((category) {
-                      final isSelected = _selectedCategory == category;
-                      return ChoiceChip(
-                        label: Text(category.label),
-                        avatar: Icon(
-                          category.icon,
-                          size: 16.0,
-                          color: isSelected
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurfaceVariant,
-                        ),
-                        selected: isSelected,
-                        onSelected: (selected) {
-                          if (selected) {
-                            setState(() {
-                              _selectedCategory = category;
-                            });
-                          }
-                        },
-                        selectedColor: theme.colorScheme.primary,
-                        labelStyle: TextStyle(
-                          color: isSelected
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurfaceVariant,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
-                        ),
-                        backgroundColor: theme.colorScheme.surfaceVariant
-                            .withOpacity(0.3),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                          side: BorderSide(
-                            color: isSelected
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outlineVariant.withOpacity(
-                                    0.5,
+                      const SizedBox(height: 8.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton.icon(
+                              icon: const Icon(Icons.calendar_month_rounded),
+                              label: Text(
+                                _selectedDueDate == null
+                                    ? 'No due date set'
+                                    : 'Due: ${_selectedDueDate!.day}/${_selectedDueDate!.month}/${_selectedDueDate!.year}',
+                              ),
+                              onPressed: () async {
+                                final date = await showDatePicker(
+                                  context: context,
+                                  initialDate:
+                                      _selectedDueDate ?? DateTime.now(),
+                                  firstDate: DateTime.now().subtract(
+                                    const Duration(days: 365),
                                   ),
+                                  lastDate: DateTime.now().add(
+                                    const Duration(days: 365 * 5),
+                                  ),
+                                );
+                                if (date != null) {
+                                  setState(() {
+                                    _selectedDueDate = date;
+                                  });
+                                }
+                              },
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                  const SizedBox(height: 20.0),
+                          if (_selectedDueDate != null) ...[
+                            const SizedBox(width: 8.0),
+                            IconButton(
+                              icon: const Icon(Icons.clear_rounded),
+                              tooltip: 'Clear due date',
+                              onPressed: () {
+                                setState(() {
+                                  _selectedDueDate = null;
+                                  _selectedReminder = TodoReminder.none;
+                                  _selectedRepeat = TodoRepeat.none;
+                                });
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
 
-                  // Priority Selection
-                  Text(
-                    'Priority',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  SegmentedButton<TodoPriority>(
-                    segments: const [
-                      ButtonSegment<TodoPriority>(
-                        value: TodoPriority.low,
-                        label: Text('Low'),
-                      ),
-                      ButtonSegment<TodoPriority>(
-                        value: TodoPriority.medium,
-                        label: Text('Medium'),
-                      ),
-                      ButtonSegment<TodoPriority>(
-                        value: TodoPriority.high,
-                        label: Text('High'),
-                      ),
-                    ],
-                    selected: {_selectedPriority},
-                    onSelectionChanged: (newSelection) {
-                      setState(() {
-                        _selectedPriority = newSelection.first;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20.0),
-
-                  // Due Date & Repeat Options
-                  Text(
-                    'Due Date & Repeat Settings',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.calendar_month_rounded),
-                          label: Text(
-                            _selectedDueDate == null
-                                ? 'No due date set'
-                                : 'Due: ${_selectedDueDate!.day}/${_selectedDueDate!.month}/${_selectedDueDate!.year}',
+                      // Recurring task repeat picker (Only show when due date is set)
+                      if (_selectedDueDate != null) ...[
+                        const SizedBox(height: 16.0),
+                        DropdownButtonFormField<TodoRepeat>(
+                          value: _selectedRepeat,
+                          decoration: InputDecoration(
+                            labelText: 'Repeat Options',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            prefixIcon: const Icon(Icons.sync_rounded),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
                           ),
-                          onPressed: () async {
-                            final date = await showDatePicker(
-                              context: context,
-                              initialDate: _selectedDueDate ?? DateTime.now(),
-                              firstDate: DateTime.now().subtract(
-                                const Duration(days: 365),
-                              ),
-                              lastDate: DateTime.now().add(
-                                const Duration(days: 365 * 5),
-                              ),
+                          items: TodoRepeat.values.map((repeat) {
+                            return DropdownMenuItem<TodoRepeat>(
+                              value: repeat,
+                              child: Text(repeat.label),
                             );
-                            if (date != null) {
+                          }).toList(),
+                          onChanged: (value) {
+                            if (value != null) {
                               setState(() {
-                                _selectedDueDate = date;
+                                _selectedRepeat = value;
                               });
                             }
                           },
                         ),
-                      ),
-                      if (_selectedDueDate != null) ...[
-                        const SizedBox(width: 8.0),
-                        IconButton(
-                          icon: const Icon(Icons.clear_rounded),
-                          tooltip: 'Clear due date',
-                          onPressed: () {
-                            setState(() {
-                              _selectedDueDate = null;
-                              _selectedReminder = TodoReminder.none;
-                              _selectedRepeat = TodoRepeat.none;
-                            });
-                          },
-                        ),
-                      ],
-                    ],
-                  ),
-
-                  // Recurring task repeat picker (Only show when due date is set)
-                  if (_selectedDueDate != null) ...[
-                    const SizedBox(height: 16.0),
-                    DropdownButtonFormField<TodoRepeat>(
-                      value: _selectedRepeat,
-                      decoration: InputDecoration(
-                        labelText: 'Repeat Options',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        prefixIcon: const Icon(Icons.sync_rounded),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                      ),
-                      items: TodoRepeat.values.map((repeat) {
-                        return DropdownMenuItem<TodoRepeat>(
-                          value: repeat,
-                          child: Text(repeat.label),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() {
-                            _selectedRepeat = value;
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16.0),
-                    DropdownButtonFormField<TodoReminder>(
-                      value: _selectedReminder,
-                      decoration: InputDecoration(
-                        labelText: 'Reminders',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12.0),
-                        ),
-                        prefixIcon: const Icon(
-                          Icons.notifications_active_rounded,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                      ),
-                      items: TodoReminder.values.map((reminder) {
-                        return DropdownMenuItem<TodoReminder>(
-                          value: reminder,
-                          child: Text(reminder.label),
-                        );
-                      }).toList(),
-                      onChanged: (value) async {
-                        if (value != null) {
-                          setState(() {
-                            _selectedReminder = value;
-                          });
-                          await _checkAndRequestNotificationPermission(value);
-                        }
-                      },
-                    ),
-                  ],
-                  const SizedBox(height: 16.0),
-
-                  SwitchListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      'Add to My Day',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    subtitle: Text(
-                      'Focus on this task today',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                          0.7,
-                        ),
-                      ),
-                    ),
-                    value: _selectedIsInMyDay,
-                    activeColor: theme.colorScheme.primary,
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedIsInMyDay = value;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 20.0),
-
-                  // Subtasks Builder Checklist inside Dialog
-                  Text(
-                    'Configure Subtasks',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 8.0),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _subtaskInputController,
-                          textCapitalization: TextCapitalization.sentences,
+                        const SizedBox(height: 16.0),
+                        DropdownButtonFormField<TodoReminder>(
+                          value: _selectedReminder,
                           decoration: InputDecoration(
-                            hintText: 'Add subtask title...',
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 12.0,
-                            ),
+                            labelText: 'Reminders',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12.0),
                             ),
-                          ),
-                          onSubmitted: (_) => _addSubtask(),
-                        ),
-                      ),
-                      const SizedBox(width: 8.0),
-                      IconButton.filled(
-                        icon: const Icon(Icons.add_rounded),
-                        onPressed: _addSubtask,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8.0),
-
-                  if (_localSubtasks.isNotEmpty) ...[
-                    Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceVariant.withOpacity(
-                          0.2,
-                        ),
-                        borderRadius: BorderRadius.circular(12.0),
-                        border: Border.all(
-                          color: theme.colorScheme.outlineVariant.withOpacity(
-                            0.5,
-                          ),
-                        ),
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: _localSubtasks.length,
-                        itemBuilder: (context, index) {
-                          final sub = _localSubtasks[index];
-                          return ListTile(
-                            dense: true,
+                            prefixIcon: const Icon(
+                              Icons.notifications_active_rounded,
+                            ),
                             contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 8.0,
+                              horizontal: 16.0,
+                              vertical: 8.0,
                             ),
-                            leading: Icon(
-                              Icons.subdirectory_arrow_right_rounded,
-                              size: 16.0,
-                              color: theme.colorScheme.primary,
-                            ),
-                            title: Text(
-                              sub.title,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.close_rounded, size: 16.0),
-                              color: theme.colorScheme.error,
-                              onPressed: () => _removeSubtask(index),
-                            ),
-                          );
+                          ),
+                          items: TodoReminder.values.map((reminder) {
+                            return DropdownMenuItem<TodoReminder>(
+                              value: reminder,
+                              child: Text(reminder.label),
+                            );
+                          }).toList(),
+                          onChanged: (value) async {
+                            if (value != null) {
+                              setState(() {
+                                _selectedReminder = value;
+                              });
+                              await _checkAndRequestNotificationPermission(
+                                value,
+                              );
+                            }
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 16.0),
+
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Add to My Day',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Focus on this task today',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant
+                                .withOpacity(0.7),
+                          ),
+                        ),
+                        value: _selectedIsInMyDay,
+                        activeColor: theme.colorScheme.primary,
+                        onChanged: (value) {
+                          setState(() {
+                            _selectedIsInMyDay = value;
+                          });
                         },
                       ),
-                    ),
-                  ],
-                  const SizedBox(height: 24.0),
+                      const SizedBox(height: 20.0),
 
-                  // Action Buttons
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Cancel'),
+                      // Subtasks Builder Checklist inside Dialog
+                      Text(
+                        'Configure Subtasks',
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
-                      const SizedBox(width: 8.0),
-                      FilledButton(
-                        onPressed: _submit,
-                        child: Text(isEditing ? 'Save' : 'Create'),
+                      const SizedBox(height: 8.0),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _subtaskInputController,
+                              textCapitalization: TextCapitalization.sentences,
+                              decoration: InputDecoration(
+                                hintText: 'Add subtask title...',
+                                isDense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 12.0,
+                                ),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                              ),
+                              onSubmitted: (_) => _addSubtask(),
+                            ),
+                          ),
+                          const SizedBox(width: 8.0),
+                          IconButton.filled(
+                            icon: const Icon(Icons.add_rounded),
+                            onPressed: _addSubtask,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8.0),
+
+                      if (_localSubtasks.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.all(8.0),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.surfaceVariant.withOpacity(
+                              0.2,
+                            ),
+                            borderRadius: BorderRadius.circular(12.0),
+                            border: Border.all(
+                              color: theme.colorScheme.outlineVariant
+                                  .withOpacity(0.5),
+                            ),
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: _localSubtasks.length,
+                            itemBuilder: (context, index) {
+                              final sub = _localSubtasks[index];
+                              return ListTile(
+                                dense: true,
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                leading: Icon(
+                                  Icons.subdirectory_arrow_right_rounded,
+                                  size: 16.0,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                title: Text(
+                                  sub.title,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
+                                trailing: IconButton(
+                                  icon: const Icon(
+                                    Icons.close_rounded,
+                                    size: 16.0,
+                                  ),
+                                  color: theme.colorScheme.error,
+                                  onPressed: () => _removeSubtask(index),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 24.0),
+
+                      // Action Buttons
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: const Text('Cancel'),
+                          ),
+                          const SizedBox(width: 8.0),
+                          FilledButton(
+                            onPressed: _submit,
+                            child: Text(isEditing ? 'Save' : 'Create'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
           ),
